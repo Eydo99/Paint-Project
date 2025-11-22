@@ -1,0 +1,18 @@
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Full viewport height */
+  overflow: hidden;
+}
+
+.workspace {
+  display: flex;
+  flex: 1; /* Takes up remaining height between navbar and status bar */
+  background-color: #f9f9f9;
+  overflow: hidden;
+}
+
+/* Make sure custom tags display as blocks or flex items */
+app-toolbar, app-properties-bar {
+  z-index: 10; /* Keep panels above the board if needed */
+}
