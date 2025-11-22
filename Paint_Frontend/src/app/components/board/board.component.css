@@ -6,20 +6,42 @@
   position: relative;
 }
 
+
+.no-grid {
+  background-image: none !important;
+}
+
+
 .board-container {
-  width: 100%;
-  height: 100%;
+ 
+  width: 960px;
+  height: 720px;
+
   background-color: #fff;
-
-
   background-size: 20px 20px;
   background-image:
-    linear-gradient(to right, #f0f0f0 1px, transparent 1px),
-    linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
+    linear-gradient(to right, #f0f0f0 1px, transparent 2px),
+    linear-gradient(to bottom, #f0f0f0 1px, transparent 2px);
 
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  margin: 0 auto;  
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); 
+
+
+  /*absعشان غير مكانو في اي حتة 
+  بعدين نخلي ال topleft corner في السنتر
+  بعدها ننقل 50% من ال hight و width عشان يتسنتر
+  
+  */
+
+  border: 3px solid #57564F ; 
+
+box-shadow: 15px 20px 40px rgba(0, 0, 0, 0.25);
+
+transition: all 0.2s ease;
 }
 
 canvas {

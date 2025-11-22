@@ -12,6 +12,15 @@ export class BoardComponent implements AfterViewInit {
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
   canvas!: fabric.Canvas;
 
+  gridless = true; 
+
+  toggleGrid()
+{
+  this.gridless = !this.gridless;
+}
+
+
+
   ngAfterViewInit(): void {
     const parentElement = this.canvasRef.nativeElement.parentElement;
     const width = parentElement?.clientWidth || 800;

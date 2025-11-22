@@ -1,3 +1,9 @@
-<div class="board-container">
+<div class="board-container" [class.no-grid]="gridless">
+
   <canvas #canvas id="paintCanvas"></canvas>
+
 </div>
+
+<button (click)="toggleGrid()">
+  {{ gridless ? 'Show Grid' : 'Hide Grid' }}
+</button>
