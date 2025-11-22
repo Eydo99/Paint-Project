@@ -2,8 +2,6 @@ package com.example.example1.shapeService;
 
 import com.example.example1.DTO.shapeDTO;
 import com.example.example1.Model.shape;
-import com.example.example1.exceptions.ShapeNotFoundException;
-import com.example.example1.exceptions.TypeNotFoundException;
 import com.example.example1.Factory.shapeFactory;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +16,7 @@ public class shapeService {
     private int nextID=1;
 
 
-    public shape createShape(shapeDTO DTO) throws  TypeNotFoundException
+    public shape createShape(shapeDTO DTO)
     {
         shape newShape =shapeFactory.createShape(DTO.getType());
         newShape.setId(nextID++);
@@ -36,14 +34,14 @@ public class shapeService {
     }
 
 
-    public void delete(int id)throws ShapeNotFoundException {
+    public void delete(int id) {
         shape shape=getShapeById(id);
         shapes.remove(shape);
     }
 
 
-    private shape getShapeById(int id) throws ShapeNotFoundException
+    private shape getShapeById(int id)
     {
-        return shapes.stream().filter(shape -> shape.getId()==id).findFirst().orElseThrow(()->new ShapeNotFoundException("Shape not found"));
+        return shapes.stream().filter(shape -> shape.getId()==id).findFirst().orElseThrow(()->new RuntimeException("Shape not found"));
     }
 }
