@@ -13,7 +13,7 @@
 
 
 .board-container {
- 
+
   width: 960px;
   height: 720px;
 
@@ -23,25 +23,25 @@
     linear-gradient(to right, #f0f0f0 1px, transparent 2px),
     linear-gradient(to bottom, #f0f0f0 1px, transparent 2px);
 
-  margin: 0 auto;  
+  margin: 0 auto;
 
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%); 
+  transform: translate(-50%, -50%);
 
 
-  /*absعشان غير مكانو في اي حتة 
+  /*absعشان غير مكانو في اي حتة
   بعدين نخلي ال topleft corner في السنتر
   بعدها ننقل 50% من ال hight و width عشان يتسنتر
-  
+
   */
 
-  border: 3px solid #57564F ; 
+  border: 3px solid #57564F ;
 
-box-shadow: 15px 20px 40px rgba(0, 0, 0, 0.25);
+  box-shadow: 15px 20px 40px rgba(0, 0, 0, 0.25);
 
-transition: all 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 canvas {
@@ -49,3 +49,5 @@ canvas {
   display: block;
   cursor: crosshair;
 }
+
+

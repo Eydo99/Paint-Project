@@ -1,12 +1,38 @@
 <nav class="navbar">
   <div class="nav-left">
     <span class="brand">Paint Studio</span>
+
     <ul class="menu">
-      <li>File <i class="ri-arrow-down-s-line"></i></li>
-      <li>Edit <i class="ri-arrow-down-s-line"></i></li>
-      <li>Shapes <i class="ri-arrow-down-s-line"></i></li>
-      <li>Colors <i class="ri-arrow-down-s-line"></i></li>
-      <li>Actions <i class="ri-arrow-down-s-line"></i></li>
+      <li class="dropdown">
+        <span (click)="toggleMenu('file')">File <i class="ri-arrow-down-s-line"></i></span>
+        <div class="dropdown-content" *ngIf="openMenu === 'file'">
+          <a (click)="saveFile('json')">Save as JSON</a>
+          <a (click)="saveFile('xml')">Save as XML</a>
+          <label for="fileUpload" class="upload-label">Load File</label>
+          <input type="file" id="fileUpload" (change)="onFileSelected($event)" accept=".json,.xml" style="display: none;">
+        </div>
+      </li>
+
+      <li class="dropdown">
+        <span (click)="toggleMenu('colors')">Colors <i class="ri-arrow-down-s-line"></i></span>
+        <div class="dropdown-content colors-grid" *ngIf="openMenu === 'colors'">
+          <div *ngFor="let color of colors"
+               [style.background]="color"
+               class="color-box"
+               (click)="selectColor(color)">
+          </div>
+        </div>
+      </li>
+
+      <li class="dropdown">
+        <span (click)="toggleMenu('actions')">Actions <i class="ri-arrow-down-s-line"></i></span>
+        <div class="dropdown-content" *ngIf="openMenu === 'actions'">
+          <a (click)="performAction('copy')">Copy Shape</a>
+          <a (click)="performAction('delete')">Delete Shape</a>
+          <div class="divider"></div>
+          <a (click)="performAction('clear')" class="danger">Clear All</a>
+        </div>
+      </li>
     </ul>
   </div>
 
@@ -14,8 +40,8 @@
 
   <div class="nav-right">
     <div class="undo-redo">
-      <button class="icon-btn"><i class="ri-arrow-go-back-line"></i></button>
-      <button class="icon-btn"><i class="ri-arrow-go-forward-line"></i></button>
+      <button class="icon-btn" (click)="performAction('undo')"><i class="ri-arrow-go-back-line"></i></button>
+      <button class="icon-btn" (click)="performAction('redo')"><i class="ri-arrow-go-forward-line"></i></button>
     </div>
 
   </div>
