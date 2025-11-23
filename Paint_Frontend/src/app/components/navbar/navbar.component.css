@@ -11,7 +11,7 @@
   padding: 0 20px;
   border-bottom: 1px solid #e0e0e0;
   background-color: #fff;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: sans-serif;
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
@@ -23,7 +23,7 @@
 }
 
 .brand {
-  color: #4285f4; /* Blue brand color */
+  color: #4285f4; /* لون براند خفيف */
   font-weight: 600;
   font-size: 16px;
 }
@@ -43,19 +43,19 @@
   display: flex;
   align-items: center;
   gap: 4px;
-}
-
-.menu li:hover {
-  color: #000;
+  padding: 5px 0;
 }
 
 /* Center Section */
 .nav-center {
+  flex-grow: 1;
+  text-align: center;
   font-size: 14px;
   font-weight: 500;
   color: #333;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   cursor: pointer;
 }
@@ -91,16 +91,7 @@
   background-color: #e0e0e0;
 }
 
-.help-btn {
-  background-color: #333;
-  color: white;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  font-size: 12px;
-}
-
+/* Share Button (التصميم المميز) */
 .share-btn {
   background-color: #4f46e5;
   color: white;
@@ -114,4 +105,60 @@
 
 .share-btn:hover {
   background-color: #4338ca;
+}
+
+/* Dropdown Styling */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  min-width: 160px;
+  border-radius: 4px;
+  z-index: 1000;
+  border: 1px solid #eee;
+  padding: 5px 0;
+}
+
+.dropdown-content a, .upload-label {
+  color: black;
+  padding: 10px 16px;
+  text-decoration: none;
+  display: block;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dropdown-content a:hover, .upload-label:hover {
+  background-color: #f1f1f1;
+}
+
+.colors-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  padding: 10px;
+  min-width: 120px;
+}
+
+.color-box {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 1px solid #ddd;
+}
+
+.color-box:hover {
+  transform: scale(1.2);
+}
+
+.danger {
+  color: red !important;
+  border-top: 1px solid #eee;
 }
