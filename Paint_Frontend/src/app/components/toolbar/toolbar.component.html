@@ -1,2 +1,105 @@
-<p>toolbar works!</p>
+<div class="toolbar">
+
+  <!-- Selection -->
+  <button class="tool-btn" 
+          [class.active]="activeTool === 'select'"
+          (click)="setTool('select')">
+    <lucide-icon name="mouse-pointer"></lucide-icon>
+  </button>
+
+  <button class="tool-btn" 
+          [class.active]="activeTool === 'move'"
+          (click)="setTool('move')">
+    <lucide-icon name="move"></lucide-icon>
+  </button>
+
+  <button class="tool-btn" 
+          [class.active]="activeTool === 'resize'"
+          (click)="setTool('resize')">
+    <lucide-icon name="crop"></lucide-icon>
+  </button>
+
+  <button class="tool-btn" 
+          [class.active]="activeTool === 'rotate'"
+          (click)="setTool('rotate')">
+    <lucide-icon name="rotate-cw"></lucide-icon>
+  </button>
+
+  <div class="separator"></div>
+
+  <!-- Shapes -->
+  <button class="tool-btn" [class.active]="activeTool === 'rect'" (click)="setTool('rect')">
+    <lucide-icon name="rectangle-horizontal"></lucide-icon>
+  </button>
+
+  <button class="tool-btn" [class.active]="activeTool === 'square'" (click)="setTool('square')">
+    <lucide-icon name="square"></lucide-icon>
+  </button>
+
+  <button class="tool-btn" [class.active]="activeTool === 'circle'" (click)="setTool('circle')">
+    <lucide-icon name="circle"></lucide-icon>
+  </button>
+
+  <button class="tool-btn" title="Ellipse">
+  <img src="assets\icons\oval.svg" class="tool-icon">
+</button>
+
+  <button class="tool-btn" [class.active]="activeTool === 'triangle'" (click)="setTool('triangle')">
+    <lucide-icon name="triangle"></lucide-icon>
+  </button>
+
+  <button class="tool-btn" [class.active]="activeTool === 'line'" (click)="setTool('line')">
+    <lucide-icon name="minus"></lucide-icon>
+  </button>
+
+  <div class="separator"></div>
+
+  <!-- Text -->
+  <button class="tool-btn" [class.active]="activeTool === 'text'" (click)="setTool('text')">
+    <lucide-icon name="type"></lucide-icon>
+  </button>
+
+  <div class="separator"></div>
+
+  <!-- Brushes -->
+  <button class="tool-btn" [class.active]="activeTool === 'brush'" (click)="setTool('brush')">
+    <lucide-icon name="brush"></lucide-icon>
+  </button>
+
+  <button class="tool-btn" [class.active]="activeTool === 'pencil'" (click)="setTool('pencil')">
+    <lucide-icon name="pencil"></lucide-icon>
+  </button>
+
+  <button class="tool-btn" [class.active]="activeTool === 'freehand'" (click)="setTool('freehand')">
+    <lucide-icon name="signature"></lucide-icon>
+  </button>
+
+  <button class="tool-btn" [class.active]="activeTool === 'eraser'" (click)="setTool('eraser')">
+    <lucide-icon name="erase"></lucide-icon>
+  </button>
+
+  <div class="separator"></div>
+
+  <!-- Color Tools -->
+  <button class="tool-btn" [class.active]="activeTool === 'fill'" (click)="setTool('fill')">
+    <lucide-icon name="paint-bucket"></lucide-icon>
+  </button>
+
+  <button class="tool-btn" [class.active]="activeTool === 'eyedropper'" (click)="setTool('eyedropper')">
+    <lucide-icon name="pipette"></lucide-icon>
+  </button>
+
+  <div class="separator"></div>
+
+  <!-- Actions -->
+  <button class="tool-btn" (click)="setTool('copy')">
+    <lucide-icon name="copy"></lucide-icon>
+  </button>
+
+  <button class="tool-btn" (click)="setTool('delete')">
+    <lucide-icon name="trash"></lucide-icon>
+  </button>
+
+</div>
+
 
