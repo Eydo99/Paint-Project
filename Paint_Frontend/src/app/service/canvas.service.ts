@@ -17,6 +17,22 @@ export class CanvasService {
   save$ = this.saveSource.asObservable();
   load$ = this.loadSource.asObservable();
 
+
+
+  // ✨ الجديد: للـ Tool من الـ Toolbar
+  private toolSource = new Subject<string>();  // نخليها private عشان نستخدم asObservable
+  tool$ = this.toolSource.asObservable();      // Observable للـ Board
+
+  // Method لتغيير الـ Tool
+  setTool(tool: string) {
+    this.toolSource.next(tool);
+  }
+
+
+
+
+
+
   // دول الـ Navbar هينادي عليهم
   triggerAction(action: string) {
     this.actionSource.next(action); // action could be 'undo', 'copy', 'delete', 'clear'
