@@ -1,9 +1,19 @@
-<div class="board-container" [class.no-grid]="gridless">
-
-  <canvas #canvas id="paintCanvas"></canvas>
-
+<!-- board.component.html -->
+<div class="board-wrapper">
+  <div class="board-container">
+    <canvas #canvas></canvas>
+  </div>
 </div>
 
-<button (click)="toggleGrid()">
-  {{ gridless ? 'Show Grid' : 'Hide Grid' }}
-</button>
+<!-- Controls (always on top-left of the viewport) -->
+<div class="controls-bar">
+  <button (click)="toggleGrid()">
+    {{ gridless ? "Show Grid" : "Hide Grid" }}
+  </button>
+
+  <select (change)="onZoomSelect($event)">
+    <option *ngFor="let z of zoomLevels" [value]="z.value">
+      {{ z.label }}
+    </option>
+  </select>
+</div>

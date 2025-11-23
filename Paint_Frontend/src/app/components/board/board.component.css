@@ -1,51 +1,66 @@
+/* board.component.css */
+
+/* host */
 :host {
   display: block;
-
-  flex: 1;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   position: relative;
 }
 
-
-.no-grid {
-  background-image: none !important;
+/* Wrapper centers the board */
+.board-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: #f4f4f4; /* workspace background (optional) */
 }
 
-
+/* Board container wraps the canvas */
 .board-container {
- 
   width: 960px;
   height: 720px;
-
-  background-color: #fff;
-  background-size: 20px 20px;
-  background-image:
-    linear-gradient(to right, #f0f0f0 1px, transparent 2px),
-    linear-gradient(to bottom, #f0f0f0 1px, transparent 2px);
-
-  margin: 0 auto;  
-
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%); 
-
-
-  /*absعشان غير مكانو في اي حتة 
-  بعدين نخلي ال topleft corner في السنتر
-  بعدها ننقل 50% من ال hight و width عشان يتسنتر
-  
-  */
-
-  border: 3px solid #57564F ; 
-
-box-shadow: 15px 20px 40px rgba(0, 0, 0, 0.25);
-
-transition: all 0.2s ease;
+  overflow: hidden;
+  background: #ffffff;
+  border: 3px solid #57564F;
+  box-shadow: 15px 20px 40px rgba(0, 0, 0, 0.25);
+  position: relative;
 }
 
+/* Canvas fills board container exactly */
 canvas {
-
+  width: 100%;
+  height: 100%;
   display: block;
+  transform-origin: top left;
   cursor: crosshair;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+/* Controls */
+.controls-bar {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  background: rgba(255,255,255,0.92);
+  padding: 8px 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  z-index: 40;
+}
+
+.controls-bar button,
+.controls-bar select {
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
 }
