@@ -1,18 +1,18 @@
 package com.example.example1.Factory;
 
-import com.example.example1.Model.Circle;
-import com.example.example1.Model.Rectangle;
-import com.example.example1.Model.shape;
+import com.example.example1.Model.*;
 
 public class shapeFactory {
     public shape createShape(String type) {
-        switch (type.toLowerCase()) {
-            case "circle":
-                return new Circle();
-            case "rectangle":
-                return new Rectangle();
-            default:
-                return null;
-        }
+        return switch (type.toLowerCase()) {
+            case "circle" -> new Circle();
+            case "rectangle" -> new Rectangle();
+            case "ellipse" -> new Ellipse();
+            case "square" -> new Square();
+            case "triangle" -> new Triangle();
+            case "line" -> new Line();
+            case "text" -> new Text();
+            default -> null;
+        };
     }
 }

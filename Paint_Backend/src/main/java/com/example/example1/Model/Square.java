@@ -3,21 +3,19 @@ package com.example.example1.Model;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Rectangle extends shape {
-
-    private double length;
-    private double width;
+public class Square extends shape {
+    private double sideLength;
 
     @Override
-    public void setProperties(Map<String,Object> props) {
+    public void setProperties(Map<String, Object> props) {
         this.x=((Number)props.get("x")).doubleValue();
         this.y=((Number)props.get("y")).doubleValue();
         this.centerX=((Number)props.get("centerX")).doubleValue();
         this.centerY=((Number)props.get("centerY")).doubleValue();
-        this.length = calculateLength(this.x,this.centerX);
-        this.width = calculateWidth(this.y,this.centerY);
+        this.sideLength=calculateSideLength(this.x,this.centerX);
         this.angle=0;
     }
+
     @Override
     public Map<String, Object> getProperties() {
         Map<String,Object> props=new HashMap<>();
@@ -25,28 +23,17 @@ public class Rectangle extends shape {
         props.put("y",this.y);
         props.put("centerX",this.centerX);
         props.put("centerY",this.centerY);
-        props.put("length",this.length);
-        props.put("width",this.width);
+        props.put("sideLength",this.sideLength);
         props.put("angle",this.angle);
         return props;
     }
 
-/*
-    public void setLength(double length) {
-        this.length = length;
+    public void setSideLength(double sideLength) {
+        this.sideLength = sideLength;
     }
 
-
-    public void setWidth(double width) {
-        this.width = width;
-    }
-
- */
-
-    private double calculateLength(double x,double centerX) {
+    public double calculateSideLength(double x, double centerX) {
         return 2*Math.abs(x-centerX);
     }
-    private double calculateWidth(double y,double centerY) {
-        return 2*Math.abs(y-centerY);
-    }
+
 }

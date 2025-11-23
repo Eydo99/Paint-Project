@@ -7,9 +7,12 @@ public abstract class shape {
     protected int id;
     protected double x;
     protected double y;
-    protected String fillcolor;
+    protected double centerX;
+    protected double centerY;
+    protected String fillColor;
     protected String outlineColor;
     protected int strokeWidth;
+    protected double angle;
 
     public String getType() {
         return type;
@@ -27,14 +30,16 @@ public abstract class shape {
         this.id = id;
     }
 
-    public abstract void setprops(Map<String, Double> props);
+    public abstract void setProperties(Map<String, Object> props);
 
-    public String getFillcolor() {
-        return fillcolor;
+    public abstract Map<String, Object> getProperties();
+
+    public String getFillColor() {
+        return fillColor;
     }
 
-    public void setFillcolor(String fillcolor) {
-        this.fillcolor = fillcolor;
+    public void setFillColor(String fillColor) {
+        this.fillColor = fillColor;
     }
 
     public String getOutlineColor() {
@@ -52,4 +57,5 @@ public abstract class shape {
     public void setStrokeWidth(int strokeWidth) {
         this.strokeWidth = strokeWidth;
     }
+
 }

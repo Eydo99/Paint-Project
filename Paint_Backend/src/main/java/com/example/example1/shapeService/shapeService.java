@@ -20,11 +20,9 @@ public class shapeService {
     {
         shape newShape =shapeFactory.createShape(DTO.getType());
         newShape.setId(nextID++);
-        newShape.setprops(DTO.getProperties());
-        newShape.setFillcolor(DTO.getFillColor());
-        newShape.setOutlineColor(DTO.getOutlineColor());
-        newShape.setStrokeWidth(DTO.getStrokeWidth());
         newShape.setType(DTO.getType());
+        newShape.setProperties(DTO.getProperties());
+
         shapes.add(newShape);
         return newShape;
     }
