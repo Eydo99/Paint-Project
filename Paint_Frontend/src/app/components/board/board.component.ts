@@ -29,7 +29,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
 
 
   private subscriptions: Subscription = new Subscription();
-  private readonly BACKEND_URL = 'http://localhost:8080/api';
+  private readonly BACKEND_URL = 'http://localhost:8080/api/shape';
 
   // logical drawing area
   canvasWidth = 960;
@@ -38,7 +38,10 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
 
   // ✨ NEW: Active tool from toolbar (الأداة النشطة من الـ Toolbar)
   activeTool: string = 'select';
-
+  canSelect: boolean = false;      // Can select shapes
+  canMove: boolean = false;        // Can move shapes
+  canResize: boolean = false;      // Can resize shapes
+  canRotate: boolean = false;      // Can rotate shapes
   // ✨ NEW: Drawing state (حالة الرسم)
   isDrawing = false;                    // هل المستخدم بيرسم دلوقتي؟
   currentShape: Konva.Shape | null = null;  // الشكل اللي بيترسم حالياً
@@ -143,46 +146,44 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     return this.canvasRef.nativeElement.parentElement as HTMLDivElement;
   }
 
+  // ✨ UPDATE initKonvaEvents() - Add this at the beginning of the method:
   private initKonvaEvents() {
-    //لو ضغط علي الباكجراوند او الستيدج بيلغي الاختيار
-    //غير كدا بيسيلكت الشكل
+    // âœ¨ Click/Tap handling with mode restrictions
     this.stage.on('click tap', (e) => {
+      // Allow selection in select, move, resize, and rotate modes
+      if (!['select', 'move', 'resize', 'rotate'].includes(this.activeTool)) {
+        this.transformer.nodes([]);
+        return;
+      }
 
       if (e.target === this.stage || e.target.id() === 'board-background') {
         this.transformer.nodes([]);
         return;
       }
+
       if (e.target.getParent()?.className !== 'Transformer') {
         this.transformer.nodes([e.target]);
       }
-
-      // لو مش في select mode، ما تعملش selection
-      if (this.activeTool !== 'select' && this.activeTool !== 'move') {
-        return;
-      }
-
     });
 
-
-    // ✨ NEW: Mouse down - بداية الرسم
+    // âœ¨ Mouse down - Start drawing (only for drawing tools)
     this.stage.on('mousedown touchstart', (e) => {
-      // لو بنعمل pan أو في select mode، ما ترسمش
-      if (this.isPanning || this.activeTool === 'select' || this.activeTool === 'move') {
+      if (this.isPanning) return;
+
+      // Don't draw in select, move, resize, or rotate modes
+      if (['select', 'move', 'resize', 'rotate'].includes(this.activeTool)) {
         return;
       }
 
-      // جيب موضع الماوس على الـ stage
       const pos = this.stage.getPointerPosition();
       if (!pos) return;
 
-      // حول من إحداثيات الشاشة لإحداثيات الـ canvas الفعلي
       const canvasPos = this.getCanvasPosition(pos.x, pos.y);
 
       this.isDrawing = true;
       this.startX = canvasPos.x;
       this.startY = canvasPos.y;
 
-      // أنشئ الشكل بناءً على الأداة النشطة
       this.currentShape = this.createShape(this.activeTool, canvasPos.x, canvasPos.y);
 
       if (this.currentShape) {
@@ -190,7 +191,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       }
     });
 
-    // ✨ NEW: Mouse move - تحديث الشكل أثناء الرسم
+    // Mouse move and up remain the same...
     this.stage.on('mousemove touchmove', (e) => {
       if (!this.isDrawing || !this.currentShape) return;
 
@@ -198,37 +199,43 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       if (!pos) return;
 
       const canvasPos = this.getCanvasPosition(pos.x, pos.y);
-
-      // حدث الشكل بناءً على موضع الماوس
       this.updateShape(this.currentShape, this.startX, this.startY, canvasPos.x, canvasPos.y);
     });
 
-    // ✨ NEW: Mouse up - نهاية الرسم
     this.stage.on('mouseup touchend', (e) => {
       if (!this.isDrawing || !this.currentShape) return;
 
       this.isDrawing = false;
-
-      // ابعت بيانات الشكل للـ backend
       this.sendShapeToBackend(this.currentShape);
-
-      // اختار الشكل الجديد
       this.transformer.nodes([this.currentShape]);
-
       this.currentShape = null;
     });
 
-    // لما يتسحب أو يتحول الشكل، احفظ التغييرات
-    this.stage.on('dragend transformend', (e) => {
+    // âœ… FIXED: Dragend - only if in 'move' mode
+    this.stage.on('dragend', (e) => {
       const target = e.target;
-      // تأكد أن الهدف ليس الـ stage نفسه أو الخلفية وأنه Shape
-      if (this.isShape(target)) {
+      if (this.isShape(target) && this.activeTool === 'move') {
+        console.log('✅ Shape moved');
         this.updateShapePositionInBackend(target);
       }
     });
 
-  }
+    // âœ… FIXED: Transformend - works for both resize AND rotate
+    this.stage.on('transformend', (e) => {
+      const target = e.target;
 
+      console.log('🔍 Transform ended, target:', target.getClassName());
+      console.log('🔍 Active tool:', this.activeTool);
+      console.log('🔍 Is shape?', this.isShape(target));
+
+      if (this.isShape(target)) {
+        // âœ… REMOVED the mode restriction - now works in any mode!
+        console.log('✅ Shape transformed (resized or rotated)');
+        console.log('📊 New shape data:', this.formatShapeData(target));
+        this.updateShapePositionInBackend(target);
+      }
+    });
+  }
 
 
   // ✨ NEW: Type guard to check if a node is a Shape
@@ -269,7 +276,8 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       fill: '#ffffff',      // لون التعبئة (ابيض)
       stroke: '#090101',    // لون الحدود (أسود)
       strokeWidth: 2,
-      draggable: true       // يمكن سحب الشكل
+      draggable: false,     // يمكن سحب الشكل
+      rotation: 0  // ✨ Add initial angle = 0
     };
 
     switch(tool) {
@@ -303,7 +311,8 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
         return new Konva.Ellipse({
           ...defaultConfig,
           radiusX: 0,
-          radiusY: 0
+          radiusY: 0,
+          listening: true
         });
 
       case 'triangle':
@@ -320,7 +329,10 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
           ...defaultConfig,
           points: [x, y, x, y],  // من (x,y) إلى (x,y) - نقطة واحدة في البداية
           fill: undefined,        // الخط ما عندوش تعبئة
-          strokeWidth: 3
+          strokeWidth: 3,
+          listening: true,  // âœ… Enable event listening
+          lineCap: 'round',
+          lineJoin: 'round'
         });
 
       default:
@@ -388,7 +400,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     console.log('Sending shape to backend:', shapeData);
 
     // ابعت للـ backend
-    this.http.post(`${this.BACKEND_URL}/shape`, shapeData).subscribe({
+    this.http.post(`${this.BACKEND_URL}`, shapeData).subscribe({
       next: (response) => {
         console.log('Shape saved successfully:', response);
         // لو الـ backend رجع ID، احفظه في الشكل
@@ -412,12 +424,14 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     }
 
     const shape = node as Konva.Shape;
+    const angle = shape.attrs.rotation || 0;
     const baseData = {
       fillColor: shape.attrs.fill || '#ffffff',
       outlineColor: shape.attrs.stroke || '#090101',
       strokeWidth: shape.attrs.strokeWidth || 2,
       x: shape.attrs.x || 0,
-      y: shape.attrs.y || 0
+      y: shape.attrs.y || 0,
+      angle: angle
     };
 
     // احسب مركز الشكل
@@ -449,11 +463,17 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     else if (shape instanceof Konva.Circle) {
       centerX = shape.attrs.x;
       centerY = shape.attrs.y;
+      const radius = shape.attrs.radius || 0;
       return {
-        ...baseData,
+        fillColor: shape.attrs.fill || '#ffffff',
+        outlineColor: shape.attrs.stroke || '#090101',
+        strokeWidth: shape.attrs.strokeWidth || 2,
+        x: shape.attrs.x - radius,  // ✅ Top-left X
+        y: shape.attrs.y - radius,
         type: 'circle',
         centerX: centerX,
-        centerY: centerY
+        centerY: centerY,
+        angle: angle  // ✨ Include angle
       };
     }
     else if (shape instanceof Konva.Ellipse) {
@@ -498,65 +518,241 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       angle: shape.attrs.rotation || 0  // ✨ ADD THIS LINE
     };
   }
-  // ✨ NEW: Update shape position in backend (تحديث موضع الشكل في الـ backend)
+  // ✨ ENHANCED: Update shape position, rotation, AND properties in backend
+// Works for: dragend, transformend (resize + rotate)
   private updateShapePositionInBackend(shape: Konva.Shape): void {
     const shapeId = shape.getAttr('id');
-    if (!shapeId) return;
+    if (!shapeId) {
+      console.warn('Shape has no ID, cannot update in backend');
+      return;
+    }
 
     let centerX = 0;
     let centerY = 0;
+    let x = 0;
+    let y = 0;
+    let properties: any = {};
 
-    // احسب المركز بناءً على نوع الشكل
+    // ✨ Get rotation angle
+    const angle = shape.attrs.rotation || 0;
+
+    // Calculate center and properties based on shape type
     if (shape instanceof Konva.Rect) {
-      centerX = shape.attrs.x + (shape.attrs.width / 2);
-      centerY = shape.attrs.y + (shape.attrs.height / 2);
+      const width = shape.attrs.width * (shape.attrs.scaleX || 1);  // ✨ Account for scale
+      const height = shape.attrs.height * (shape.attrs.scaleY || 1);
+
+      x = shape.attrs.x || 0;
+      y = shape.attrs.y || 0;
+      centerX = x + (width / 2);
+      centerY = y + (height / 2);
+
+      const shapeType = shape.getAttr('shapeType');
+      if (shapeType === 'square') {
+        properties = {
+          sideLength: width
+        };
+      } else {
+        properties = {
+          length: height,
+          width: width
+        };
+      }
     }
-    else if (shape instanceof Konva.Circle || shape instanceof Konva.Ellipse ||
-      shape instanceof Konva.RegularPolygon) {
-      centerX = shape.attrs.x;
-      centerY = shape.attrs.y;
+    else if (shape instanceof Konva.Circle) {
+      const radius = (shape.attrs.radius || 0) * (shape.attrs.scaleX || 1);  // ✨ Account for scale
+
+      centerX = shape.attrs.x || 0;
+      centerY = shape.attrs.y || 0;
+      x = centerX - radius;
+      y = centerY - radius;
+
+      properties = {
+        radius: radius
+      };
+    }
+    else if (shape instanceof Konva.Ellipse) {
+      const radiusX = (shape.attrs.radiusX || 0) * (shape.attrs.scaleX || 1);  // ✨ Account for scale
+      const radiusY = (shape.attrs.radiusY || 0) * (shape.attrs.scaleY || 1);
+
+      centerX = shape.attrs.x || 0;
+      centerY = shape.attrs.y || 0;
+      x = centerX - radiusX;
+      y = centerY - radiusY;
+
+      properties = {
+        radiusX: radiusX,
+        radiusY: radiusY
+      };
     }
     else if (shape instanceof Konva.Line) {
       const points = shape.attrs.points || [0, 0, 0, 0];
-      centerX = points[2] || 0;
-      centerY = points[3] || 0;
+
+      x = points[0] || 0;
+      y = points[1] || 0;
+
+      const xEnd = points[2] || 0;
+      const yEnd = points[3] || 0;
+
+      centerX = (x + xEnd) / 2;
+      centerY = (y + yEnd) / 2;
+
+      const length = Math.sqrt(
+        Math.pow(xEnd - x, 2) + Math.pow(yEnd - y, 2)
+      );
+
+      properties = {
+        xEnd: xEnd,
+        yEnd: yEnd,
+        length: length
+      };
+    }
+    else if (shape instanceof Konva.RegularPolygon && shape.attrs.sides === 3) {
+      const radius = (shape.attrs.radius || 0) * (shape.attrs.scaleX || 1);  // ✨ Account for scale
+
+      centerX = shape.attrs.x || 0;
+      centerY = shape.attrs.y || 0;
+
+      x = centerX - radius;
+      y = centerY - radius;
+
+      const base = Math.sqrt(3) * radius;
+      const height = 1.5 * radius;
+
+      properties = {
+        base: base,
+        height: height
+      };
     }
 
     const updateData = {
       id: shapeId,
-      x: shape.attrs.x || 0,
-      y: shape.attrs.y || 0,
+      x: x,
+      y: y,
       centerX: centerX,
-      centerY: centerY
+      centerY: centerY,
+      angle: angle,  // ✨ Include rotation angle
+      properties: properties
     };
 
-    console.log('Updating shape position in backend:', updateData);
+    // console.log(' Updating shape in backend:');
+    // console.log('  Shape ID:', shapeId);
+    // console.log('  Position: (x:', x, ', y:', y, ')');
+    // console.log('  Center: (', centerX, ',', centerY, ')');
+    // console.log('  Angle:', angle, '°');
+    // console.log('  Properties:', properties);
+    console.log('  Full data:', updateData);
 
-    // ابعت تحديث الموضع للـ backend
-    this.http.post(`${this.BACKEND_URL}/move`, updateData).subscribe({
+    this.http.put(`${this.BACKEND_URL}/move`, updateData).subscribe({
       next: (response) => {
-        console.log('Shape position updated successfully:', response);
+        console.log('✅ Shape updated successfully in backend:', response);
       },
       error: (err) => {
-        console.error('Failed to update shape position:', err);
+        console.error('❌ Failed to update shape in backend:', err);
       }
     });
   }
   // ✨ NEW: Method to receive tool change from toolbar (استقبال تغيير الأداة من الـ toolbar)
+  // âœ… FIXED: Method to receive tool change from toolbar
   onToolChange(tool: string): void {
     this.activeTool = tool;
 
-    // لو رجعنا لـ select mode، الغي الاختيار
-    if (tool === 'select') {
-      this.transformer.nodes([]);
+    // Reset all mode flags
+    this.canSelect = false;
+    this.canMove = false;
+    this.canResize = false;
+    this.canRotate = false;
+
+    // Set transformer properties based on mode
+    switch(tool) {
+      case 'select':
+        this.canSelect = true;
+        this.transformer.enabledAnchors([]);
+        this.transformer.rotateEnabled(false);
+        this.transformer.borderEnabled(true);
+        this.transformer.borderStroke('#0066ff');
+        this.transformer.borderStrokeWidth(2);
+        break;
+
+      case 'move':
+        this.canSelect = true;
+        this.canMove = true;
+        this.transformer.enabledAnchors([]);
+        this.transformer.rotateEnabled(false);
+        this.transformer.borderEnabled(true);
+        this.transformer.borderStroke('#0066ff');
+        this.transformer.borderStrokeWidth(2);
+        // Enable dragging for all shapes
+        this.mainLayer.children.forEach(child => {
+          if (this.isShape(child)) {
+            child.draggable(true);
+          }
+        });
+        break;
+
+      case 'resize':
+        this.canSelect = true;
+        this.canResize = true;
+        // Enable all resize handles
+        this.transformer.enabledAnchors([
+          'top-left', 'top-center', 'top-right',
+          'middle-right', 'middle-left',
+          'bottom-left', 'bottom-center', 'bottom-right'
+        ]);
+        this.transformer.rotateEnabled(false);
+        this.transformer.borderEnabled(true);
+        this.transformer.borderStroke('#0066ff');
+        this.transformer.borderStrokeWidth(2);
+        // âœ… Keep shapes draggable even in resize mode (optional)
+        // Or disable if you want resize-only interaction:
+        this.mainLayer.children.forEach(child => {
+          if (this.isShape(child)) {
+            child.draggable(false); // Disable drag to avoid conflicts
+          }
+        });
+        break;
+
+      case 'rotate':
+        this.canSelect = true;
+        this.canRotate = true;
+        this.transformer.enabledAnchors([]);
+        this.transformer.rotateEnabled(true);
+        this.transformer.borderEnabled(true);
+        this.transformer.borderStroke('#0066ff');
+        this.transformer.borderStrokeWidth(2);
+        // Disable dragging in rotate mode
+        this.mainLayer.children.forEach(child => {
+          if (this.isShape(child)) {
+            child.draggable(false);
+          }
+        });
+        break;
+
+      default:
+        // For drawing tools, clear selection and disable transformer
+        this.transformer.nodes([]);
+        this.transformer.enabledAnchors([]);
+        this.transformer.rotateEnabled(false);
+        this.transformer.borderEnabled(false);
+        // Disable dragging for drawing tools
+        this.mainLayer.children.forEach(child => {
+          if (this.isShape(child)) {
+            child.draggable(false);
+          }
+        });
+        break;
     }
 
-    // لو الأداة هي action (copy, delete, etc.)، نفذها فوراً
+    // Handle actions
     if (['copy', 'delete', 'clear', 'undo', 'redo'].includes(tool)) {
       this.handleAction(tool);
     }
 
-    console.log('Active tool changed to:', tool);
+    console.log('🎨 Active tool changed to:', tool, {
+      canSelect: this.canSelect,
+      canMove: this.canMove,
+      canResize: this.canResize,
+      canRotate: this.canRotate
+    });
   }
   // -------------------------
   // Resize: keep centered on viewport changes
