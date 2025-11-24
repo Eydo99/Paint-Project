@@ -6,10 +6,7 @@ import java.util.List;
 
 public class deleteCommand implements Command {
     private final shape shape;
-    private final List<shape>
-
-
-            shapes;
+    private final List<shape> shapes;
 
     public deleteCommand(List<shape> shapes, shape shape) {
         this.shape = shape;

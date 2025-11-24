@@ -117,4 +117,3 @@ public abstract class shape implements Cloneable {
         setStrokeWidth(strokeWidth);
     }
 }
-

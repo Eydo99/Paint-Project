@@ -9,13 +9,13 @@ public class updateColorCommand implements Command {
     private final int newStrokeWidth,oldStrokeWidth;
 
     public updateColorCommand(shape shape, String newFillColor, String newOutlineColor,int newStrokeWidth) {
-         this.shape = shape;
-         this.newFillColor = newFillColor;
-         this.newOutlineColor = newOutlineColor;
-         this.newStrokeWidth=newStrokeWidth;
-         this.oldFillColor=shape.getFillColor();
-         this.oldOutlineColor=shape.getOutlineColor();
-         this.oldStrokeWidth= shape.getStrokeWidth();
+        this.shape = shape;
+        this.newFillColor = newFillColor;
+        this.newOutlineColor = newOutlineColor;
+        this.newStrokeWidth=newStrokeWidth;
+        this.oldFillColor=shape.getFillColor();
+        this.oldOutlineColor=shape.getOutlineColor();
+        this.oldStrokeWidth= shape.getStrokeWidth();
     }
 
     public void execute() {

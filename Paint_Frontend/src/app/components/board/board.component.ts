@@ -1,42 +1,35 @@
-import { Component, AfterViewInit, OnDestroy } from '@angular/core';
+// board.component.ts
+import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 import Konva from 'konva';
 import { Subscription } from 'rxjs';
-import { ShapeToolService } from '../../service/shape-tool.service';
-import { ColorService } from '../../service/color.service';
-import { CanvasService } from '../../service/canvas.service'; // you have this service in the project
+import { CanvasService } from '../../service/canvas.service';
 
 @Component({
   selector: 'app-board',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HttpClientModule],
   templateUrl: './board.component.html',
-  styleUrls: ['./board.component.css'],
-  providers: [ShapeToolService]
+  styleUrls: ['./board.component.css']
 })
 export class BoardComponent implements AfterViewInit, OnDestroy {
-  private stage!: Konva.Stage;
-  private layer!: Konva.Layer;
-  private uiLayer!: Konva.Layer;
-  private gridLayer!: Konva.Layer;
 
-  // preview shape while drawing
-  private tempShape: Konva.Shape | null = null;
+  @ViewChild('canvas', { static: false }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
-  // transformer (selection)
-  private transformer: Konva.Transformer | null = null;
-  private selectedShape: Konva.Shape | null = null;
+  // Konva variables
+  stage!: Konva.Stage;
+  //layer للاشكال
+  mainLayer!: Konva.Layer;
+  //layer للجريد
+  gridLayer!: Konva.Layer;
+  // هو الصندوق اللي بيظهر حوالين الشكل لما تختاره
+  transformer!: Konva.Transformer;
 
-  // drawing state
-  private drawing = false;
-  private startPoint: { x: number; y: number } | null = null;
 
-<<<<<<< HEAD
-  // grid + zoom (kept from earlier)
-=======
 
   private subscriptions: Subscription = new Subscription();
-  private readonly BACKEND_URL = 'http://localhost:8080/api';
+  private readonly BACKEND_URL = 'http://localhost:8080/api/shape';
 
   // logical drawing area
   canvasWidth = 960;
@@ -45,7 +38,10 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
 
   // ✨ NEW: Active tool from toolbar (الأداة النشطة من الـ Toolbar)
   activeTool: string = 'select';
-
+  canSelect: boolean = false;      // Can select shapes
+  canMove: boolean = false;        // Can move shapes
+  canResize: boolean = false;      // Can resize shapes
+  canRotate: boolean = false;      // Can rotate shapes
   // ✨ NEW: Drawing state (حالة الرسم)
   isDrawing = false;                    // هل المستخدم بيرسم دلوقتي؟
   currentShape: Konva.Shape | null = null;  // الشكل اللي بيترسم حالياً
@@ -58,9 +54,16 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
   maxZoom = 5;
   zoomStep = 0.1; // Slower zoom speed (was 0.5)
   gridSize = 20;
->>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
   gridless = true;
-  private gridSize = 20;
+
+  // pan
+  offsetX = 0;
+  offsetY = 0;
+  isPanning = false;
+  lastMouseX = 0;
+  lastMouseY = 0;
+
+  // dropdown options
   zoomLevels = [
     { label: 'Fit', value: 'fit' },
     { label: '50%', value: '0.5' },
@@ -69,92 +72,47 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     { label: '300%', value: '3' },
     { label: '500%', value: '5' }
   ];
-  private currentZoom = 1;
-
-  // tool from toolbar (move/resize/draw shapes, etc.)
-  currentTool:
-    | 'select'
-    | 'move'
-    | 'resize'
-    | 'rectangle'
-    | 'square'
-    | 'circle'
-    | 'ellipse'
-    | 'triangle'
-    | 'line' = 'select';
-
-  private subs: Subscription[] = [];
 
   constructor(
-    private shapeTool: ShapeToolService,
-    private colorSrv: ColorService,
-    private canvasSvc: CanvasService
+    private canvasService: CanvasService,
+    private http: HttpClient
   ) {}
 
   ngAfterViewInit(): void {
-    this.stage = new Konva.Stage({
-      container: 'board-container',
-      width: 960,
-      height: 720
-    });
-
-    this.gridLayer = new Konva.Layer();
-    this.layer = new Konva.Layer();
-    this.uiLayer = new Konva.Layer();
-
-    this.stage.add(this.gridLayer);
-    this.stage.add(this.layer);
-    this.stage.add(this.uiLayer);
-
-    this.createGrid();
-    this.createTransformer();
-    this.attachPointerEvents();
-
-    // subscribe to tool changes published by toolbar/canvas service
-    if ((this.canvasSvc as any).tool$) {
-      this.subs.push(
-        (this.canvasSvc as any).tool$.subscribe((t: string) => {
-          this.setTool(t as any);
-        })
-      );
-    } else if ((this.canvasSvc as any).getTool) {
-      try {
-        const initial = (this.canvasSvc as any).getTool();
-        if (initial) this.setTool(initial);
-      } catch {}
-    }
+    // استخدام setTimeout للتأكد من أن DOM جاهز تماماً
+    setTimeout(() => {
+      this.initKonva();
+      this.resetPanToCenter();
+      this.drawGrid();
+      this.setupSubscriptions();
+    }, 0);
   }
 
   ngOnDestroy(): void {
-    this.subs.forEach(s => s.unsubscribe());
+    this.subscriptions.unsubscribe();
+    if (this.stage) {
+      this.stage.destroy();
+    }
   }
 
-  // ---------------- Grid ----------------
-  private createGrid() {
-    const size = this.gridSize;
-    const w = this.stage.width();
-    const h = this.stage.height();
-
-<<<<<<< HEAD
-    for (let x = 0; x <= w; x += size) {
-      this.gridLayer.add(
-        new Konva.Line({
-          points: [x, 0, x, h],
-          stroke: '#e6e6e6',
-          strokeWidth: 1
-        })
-      );
+  // -------------------------
+  // Konva Initialization
+  // -------------------------
+  initKonva() {
+    const container = this.getContainer();
+    if (!container) {
+      console.error('Container not found!');
+      return;
     }
+    //امسك ال canavsHTML واعمل منهKonva.Stage
+    this.stage = new Konva.Stage({
+      container: container,
+      width: container.clientWidth,
+      height: container.clientHeight,
+      x: 0,
+      y: 0
+    });
 
-    for (let y = 0; y <= h; y += size) {
-      this.gridLayer.add(
-        new Konva.Line({
-          points: [0, y, w, y],
-          stroke: '#e6e6e6',
-          strokeWidth: 1
-        })
-      );
-=======
     // 1. Grid Layer (Background)
     this.gridLayer = new Konva.Layer();
     this.stage.add(this.gridLayer);
@@ -188,46 +146,44 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     return this.canvasRef.nativeElement.parentElement as HTMLDivElement;
   }
 
+  // ✨ UPDATE initKonvaEvents() - Add this at the beginning of the method:
   private initKonvaEvents() {
-    //لو ضغط علي الباكجراوند او الستيدج بيلغي الاختيار
-    //غير كدا بيسيلكت الشكل
+    // âœ¨ Click/Tap handling with mode restrictions
     this.stage.on('click tap', (e) => {
+      // Allow selection in select, move, resize, and rotate modes
+      if (!['select', 'move', 'resize', 'rotate'].includes(this.activeTool)) {
+        this.transformer.nodes([]);
+        return;
+      }
 
       if (e.target === this.stage || e.target.id() === 'board-background') {
         this.transformer.nodes([]);
         return;
       }
+
       if (e.target.getParent()?.className !== 'Transformer') {
         this.transformer.nodes([e.target]);
       }
-
-      // لو مش في select mode، ما تعملش selection
-      if (this.activeTool !== 'select' && this.activeTool !== 'move') {
-        return;
-      }
-
     });
 
-
-    // ✨ NEW: Mouse down - بداية الرسم
+    // âœ¨ Mouse down - Start drawing (only for drawing tools)
     this.stage.on('mousedown touchstart', (e) => {
-      // لو بنعمل pan أو في select mode، ما ترسمش
-      if (this.isPanning || this.activeTool === 'select' || this.activeTool === 'move') {
+      if (this.isPanning) return;
+
+      // Don't draw in select, move, resize, or rotate modes
+      if (['select', 'move', 'resize', 'rotate'].includes(this.activeTool)) {
         return;
       }
 
-      // جيب موضع الماوس على الـ stage
       const pos = this.stage.getPointerPosition();
       if (!pos) return;
 
-      // حول من إحداثيات الشاشة لإحداثيات الـ canvas الفعلي
       const canvasPos = this.getCanvasPosition(pos.x, pos.y);
 
       this.isDrawing = true;
       this.startX = canvasPos.x;
       this.startY = canvasPos.y;
 
-      // أنشئ الشكل بناءً على الأداة النشطة
       this.currentShape = this.createShape(this.activeTool, canvasPos.x, canvasPos.y);
 
       if (this.currentShape) {
@@ -235,7 +191,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       }
     });
 
-    // ✨ NEW: Mouse move - تحديث الشكل أثناء الرسم
+    // Mouse move and up remain the same...
     this.stage.on('mousemove touchmove', (e) => {
       if (!this.isDrawing || !this.currentShape) return;
 
@@ -243,37 +199,47 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       if (!pos) return;
 
       const canvasPos = this.getCanvasPosition(pos.x, pos.y);
-
-      // حدث الشكل بناءً على موضع الماوس
       this.updateShape(this.currentShape, this.startX, this.startY, canvasPos.x, canvasPos.y);
     });
 
-    // ✨ NEW: Mouse up - نهاية الرسم
     this.stage.on('mouseup touchend', (e) => {
       if (!this.isDrawing || !this.currentShape) return;
 
       this.isDrawing = false;
-
-      // ابعت بيانات الشكل للـ backend
       this.sendShapeToBackend(this.currentShape);
-
-      // اختار الشكل الجديد
       this.transformer.nodes([this.currentShape]);
-
       this.currentShape = null;
     });
 
-    // لما يتسحب أو يتحول الشكل، احفظ التغييرات
-    this.stage.on('dragend transformend', (e) => {
+    // âœ… FIXED: Dragend - only if in 'move' mode
+    this.stage.on('dragend', (e) => {
       const target = e.target;
-      // تأكد أن الهدف ليس الـ stage نفسه أو الخلفية وأنه Shape
-      if (this.isShape(target)) {
+      if (this.isShape(target) && this.activeTool === 'move') {
+        console.log('✅ Shape moved');
         this.updateShapePositionInBackend(target);
       }
     });
 
-  }
+    // âœ… FIXED: Transformend - works for both resize AND rotate
+    this.stage.on('transformend', (e) => {
+      // ⚠️ IMPORTANT: e.target is the Transformer, not the shape!
+      // We need to get the actual transformed shapes from transformer.nodes()
+      const transformedShapes = this.transformer.nodes();
 
+      console.log('🔍 Transform ended');
+      console.log('🔍 Active tool:', this.activeTool);
+      console.log('🔍 Transformed shapes count:', transformedShapes.length);
+
+      // Update each transformed shape
+      transformedShapes.forEach(node => {
+        if (this.isShape(node)) {
+          console.log('✅ Shape transformed (resized or rotated)');
+          console.log('📊 New shape data:', this.formatShapeData(node));
+          this.updateShapePositionInBackend(node);
+        }
+      });
+    });
+  }
 
 
   // ✨ NEW: Type guard to check if a node is a Shape
@@ -314,7 +280,8 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       fill: '#ffffff',      // لون التعبئة (ابيض)
       stroke: '#090101',    // لون الحدود (أسود)
       strokeWidth: 2,
-      draggable: true       // يمكن سحب الشكل
+      draggable: false,     // يمكن سحب الشكل
+      rotation: 0  // ✨ Add initial angle = 0
     };
 
     switch(tool) {
@@ -348,7 +315,8 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
         return new Konva.Ellipse({
           ...defaultConfig,
           radiusX: 0,
-          radiusY: 0
+          radiusY: 0,
+          listening: true
         });
 
       case 'triangle':
@@ -365,7 +333,10 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
           ...defaultConfig,
           points: [x, y, x, y],  // من (x,y) إلى (x,y) - نقطة واحدة في البداية
           fill: undefined,        // الخط ما عندوش تعبئة
-          strokeWidth: 3
+          strokeWidth: 3,
+          listening: true,  // âœ… Enable event listening
+          lineCap: 'round',
+          lineJoin: 'round'
         });
 
       default:
@@ -433,7 +404,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     console.log('Sending shape to backend:', shapeData);
 
     // ابعت للـ backend
-    this.http.post(`${this.BACKEND_URL}/shape`, shapeData).subscribe({
+    this.http.post(`${this.BACKEND_URL}`, shapeData).subscribe({
       next: (response) => {
         console.log('Shape saved successfully:', response);
         // لو الـ backend رجع ID، احفظه في الشكل
@@ -457,12 +428,14 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     }
 
     const shape = node as Konva.Shape;
+    const angle = shape.attrs.rotation || 0;
     const baseData = {
       fillColor: shape.attrs.fill || '#ffffff',
       outlineColor: shape.attrs.stroke || '#090101',
       strokeWidth: shape.attrs.strokeWidth || 2,
       x: shape.attrs.x || 0,
-      y: shape.attrs.y || 0
+      y: shape.attrs.y || 0,
+      angle: angle
     };
 
     // احسب مركز الشكل
@@ -494,11 +467,17 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     else if (shape instanceof Konva.Circle) {
       centerX = shape.attrs.x;
       centerY = shape.attrs.y;
+      const radius = shape.attrs.radius || 0;
       return {
-        ...baseData,
+        fillColor: shape.attrs.fill || '#ffffff',
+        outlineColor: shape.attrs.stroke || '#090101',
+        strokeWidth: shape.attrs.strokeWidth || 2,
+        x: shape.attrs.x - radius,  // ✅ Top-left X
+        y: shape.attrs.y - radius,
         type: 'circle',
         centerX: centerX,
-        centerY: centerY
+        centerY: centerY,
+        angle: angle  // ✨ Include angle
       };
     }
     else if (shape instanceof Konva.Ellipse) {
@@ -543,78 +522,636 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       angle: shape.attrs.rotation || 0  // ✨ ADD THIS LINE
     };
   }
-  // ✨ NEW: Update shape position in backend (تحديث موضع الشكل في الـ backend)
+  // ✨ ENHANCED: Update shape position, rotation, AND properties in backend
+// Works for: dragend, transformend (resize + rotate)
   private updateShapePositionInBackend(shape: Konva.Shape): void {
     const shapeId = shape.getAttr('id');
-    if (!shapeId) return;
+    if (!shapeId) {
+      console.warn('Shape has no ID, cannot update in backend');
+      return;
+    }
 
     let centerX = 0;
     let centerY = 0;
+    let x = 0;
+    let y = 0;
+    let properties: any = {};
 
-    // احسب المركز بناءً على نوع الشكل
+    // ✨ Get rotation angle
+    const angle = shape.attrs.rotation || 0;
+
+    // Calculate center and properties based on shape type
     if (shape instanceof Konva.Rect) {
-      centerX = shape.attrs.x + (shape.attrs.width / 2);
-      centerY = shape.attrs.y + (shape.attrs.height / 2);
+      const width = shape.attrs.width * (shape.attrs.scaleX || 1);  // ✨ Account for scale
+      const height = shape.attrs.height * (shape.attrs.scaleY || 1);
+
+      x = shape.attrs.x || 0;
+      y = shape.attrs.y || 0;
+      centerX = x + (width / 2);
+      centerY = y + (height / 2);
+
+      const shapeType = shape.getAttr('shapeType');
+      if (shapeType === 'square') {
+        properties = {
+          sideLength: width
+        };
+      } else {
+        properties = {
+          length: height,
+          width: width
+        };
+      }
     }
-    else if (shape instanceof Konva.Circle || shape instanceof Konva.Ellipse ||
-      shape instanceof Konva.RegularPolygon) {
-      centerX = shape.attrs.x;
-      centerY = shape.attrs.y;
+    else if (shape instanceof Konva.Circle) {
+      const radius = (shape.attrs.radius || 0) * (shape.attrs.scaleX || 1);  // ✨ Account for scale
+
+      centerX = shape.attrs.x || 0;
+      centerY = shape.attrs.y || 0;
+      x = centerX - radius;
+      y = centerY - radius;
+
+      properties = {
+        radius: radius
+      };
+    }
+    else if (shape instanceof Konva.Ellipse) {
+      const radiusX = (shape.attrs.radiusX || 0) * (shape.attrs.scaleX || 1);  // ✨ Account for scale
+      const radiusY = (shape.attrs.radiusY || 0) * (shape.attrs.scaleY || 1);
+
+      centerX = shape.attrs.x || 0;
+      centerY = shape.attrs.y || 0;
+      x = centerX - radiusX;
+      y = centerY - radiusY;
+
+      properties = {
+        radiusX: radiusX,
+        radiusY: radiusY
+      };
     }
     else if (shape instanceof Konva.Line) {
       const points = shape.attrs.points || [0, 0, 0, 0];
-      centerX = points[2] || 0;
-      centerY = points[3] || 0;
+
+      x = points[0] || 0;
+      y = points[1] || 0;
+
+      const xEnd = points[2] || 0;
+      const yEnd = points[3] || 0;
+
+      centerX = (x + xEnd) / 2;
+      centerY = (y + yEnd) / 2;
+
+      const length = Math.sqrt(
+        Math.pow(xEnd - x, 2) + Math.pow(yEnd - y, 2)
+      );
+
+      properties = {
+        xEnd: xEnd,
+        yEnd: yEnd,
+        length: length
+      };
+    }
+    else if (shape instanceof Konva.RegularPolygon && shape.attrs.sides === 3) {
+      const radius = (shape.attrs.radius || 0) * (shape.attrs.scaleX || 1);  // ✨ Account for scale
+
+      centerX = shape.attrs.x || 0;
+      centerY = shape.attrs.y || 0;
+
+      x = centerX - radius;
+      y = centerY - radius;
+
+      const base = Math.sqrt(3) * radius;
+      const height = 1.5 * radius;
+
+      properties = {
+        base: base,
+        height: height
+      };
     }
 
     const updateData = {
       id: shapeId,
-      x: shape.attrs.x || 0,
-      y: shape.attrs.y || 0,
+      x: x,
+      y: y,
       centerX: centerX,
-      centerY: centerY
+      centerY: centerY,
+      angle: angle,  // ✨ Include rotation angle
+      properties: properties
     };
 
-    console.log('Updating shape position in backend:', updateData);
+    // console.log(' Updating shape in backend:');
+    // console.log('  Shape ID:', shapeId);
+    // console.log('  Position: (x:', x, ', y:', y, ')');
+    // console.log('  Center: (', centerX, ',', centerY, ')');
+    // console.log('  Angle:', angle, '°');
+    // console.log('  Properties:', properties);
+    console.log('  Full data:', updateData);
 
-    // ابعت تحديث الموضع للـ backend
-    this.http.post(`${this.BACKEND_URL}/move`, updateData).subscribe({
+    this.http.put(`${this.BACKEND_URL}/updateShape`, updateData).subscribe({
       next: (response) => {
-        console.log('Shape position updated successfully:', response);
+        console.log('✅ Shape updated successfully in backend:', response);
       },
       error: (err) => {
-        console.error('Failed to update shape position:', err);
+        console.error('❌ Failed to update shape in backend:', err);
       }
     });
   }
   // ✨ NEW: Method to receive tool change from toolbar (استقبال تغيير الأداة من الـ toolbar)
+  // âœ… FIXED: Method to receive tool change from toolbar
   onToolChange(tool: string): void {
     this.activeTool = tool;
 
-    // لو رجعنا لـ select mode، الغي الاختيار
-    if (tool === 'select') {
-      this.transformer.nodes([]);
->>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
+    // Reset all mode flags
+    this.canSelect = false;
+    this.canMove = false;
+    this.canResize = false;
+    this.canRotate = false;
+
+    // Set transformer properties based on mode
+    switch(tool) {
+      case 'select':
+        this.canSelect = true;
+        this.transformer.enabledAnchors([]);
+        this.transformer.rotateEnabled(false);
+        this.transformer.borderEnabled(true);
+        this.transformer.borderStroke('#0066ff');
+        this.transformer.borderStrokeWidth(2);
+        break;
+
+      case 'move':
+        this.canSelect = true;
+        this.canMove = true;
+        this.transformer.enabledAnchors([]);
+        this.transformer.rotateEnabled(false);
+        this.transformer.borderEnabled(true);
+        this.transformer.borderStroke('#0066ff');
+        this.transformer.borderStrokeWidth(2);
+        // Enable dragging for all shapes
+        this.mainLayer.children.forEach(child => {
+          if (this.isShape(child)) {
+            child.draggable(true);
+          }
+        });
+        break;
+
+      case 'resize':
+        this.canSelect = true;
+        this.canResize = true;
+        // Enable all resize handles
+        this.transformer.enabledAnchors([
+          'top-left', 'top-center', 'top-right',
+          'middle-right', 'middle-left',
+          'bottom-left', 'bottom-center', 'bottom-right'
+        ]);
+        this.transformer.rotateEnabled(false);
+        this.transformer.borderEnabled(true);
+        this.transformer.borderStroke('#0066ff');
+        this.transformer.borderStrokeWidth(2);
+        // âœ… Keep shapes draggable even in resize mode (optional)
+        // Or disable if you want resize-only interaction:
+        this.mainLayer.children.forEach(child => {
+          if (this.isShape(child)) {
+            child.draggable(false); // Disable drag to avoid conflicts
+          }
+        });
+        break;
+
+      case 'rotate':
+        this.canSelect = true;
+        this.canRotate = true;
+        this.transformer.enabledAnchors([]);
+        this.transformer.rotateEnabled(true);
+        this.transformer.borderEnabled(true);
+        this.transformer.borderStroke('#0066ff');
+        this.transformer.borderStrokeWidth(2);
+        // Disable dragging in rotate mode
+        this.mainLayer.children.forEach(child => {
+          if (this.isShape(child)) {
+            child.draggable(false);
+          }
+        });
+        break;
+
+      default:
+        // For drawing tools, clear selection and disable transformer
+        this.transformer.nodes([]);
+        this.transformer.enabledAnchors([]);
+        this.transformer.rotateEnabled(false);
+        this.transformer.borderEnabled(false);
+        // Disable dragging for drawing tools
+        this.mainLayer.children.forEach(child => {
+          if (this.isShape(child)) {
+            child.draggable(false);
+          }
+        });
+        break;
     }
 
-    this.gridLayer.visible(!this.gridless);
-    this.gridLayer.draw();
+    // Handle actions
+    if (['copy', 'delete', 'clear', 'undo', 'redo'].includes(tool)) {
+      this.handleAction(tool);
+    }
+
+    console.log('🎨 Active tool changed to:', tool, {
+      canSelect: this.canSelect,
+      canMove: this.canMove,
+      canResize: this.canResize,
+      canRotate: this.canRotate
+    });
+  }
+  // -------------------------
+  // Resize: keep centered on viewport changes
+  // -------------------------
+  @HostListener('window:resize')
+  onWindowResize() {
+    const container = this.getContainer();
+    if (!container || !this.stage) return;
+
+    this.stage.width(container.clientWidth);
+    this.stage.height(container.clientHeight);
+    this.resetPanToCenter();
+    this.drawGrid();
+  }
+
+  // -------------------------
+  // Mouse / Pan handlers
+  // -------------------------
+  @HostListener('mousedown', ['$event'])
+  onMouseDown(e: MouseEvent) {
+    if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+      this.isPanning = true;
+      this.lastMouseX = e.clientX;
+      this.lastMouseY = e.clientY;
+      e.preventDefault();
+    }
+  }
+
+  @HostListener('mousemove', ['$event'])
+  onMouseMove(e: MouseEvent) {
+    if (!this.isPanning || !this.stage) return;
+    e.preventDefault();
+
+    const dx = e.clientX - this.lastMouseX;
+    const dy = e.clientY - this.lastMouseY;
+
+    const newPos = {
+      x: this.stage.x() + dx,
+      y: this.stage.y() + dy
+    };
+
+    this.stage.position(newPos);
+    this.lastMouseX = e.clientX;
+    this.lastMouseY = e.clientY;
+    this.clampPan();
+  }
+
+  @HostListener('window:mouseup')
+  onMouseUp() {
+    this.isPanning = false;
+  }
+
+  // -------------------------
+  // Wheel / Zoom handlers
+  // -------------------------
+  @HostListener('wheel', ['$event'])
+  onWheel(e: WheelEvent) {
+    if (!this.stage) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const dir = e.deltaY > 0 ? -1 : 1;
+    const rawNewZoom = this.zoom + dir * this.zoomStep;
+    const newZoom = Math.max(this.minZoom, Math.min(rawNewZoom, this.maxZoom));
+
+    // PROTECTION: STOP zooming out when scaled grid would be too small
+    const scaledGridPx = this.gridSize * newZoom;
+    if (scaledGridPx < 8) {
+      return;
+    }
+
+    // Get mouse position relative to the stage
+    const pointer = this.stage.getPointerPosition();
+    if (!pointer) {
+      // Fallback: zoom to center
+      this.smoothZoomTo(newZoom);
+      return;
+    }
+
+    // Use stage pointer position directly (already in stage coordinate system)
+    this.setZoomKonvaInstant(newZoom, pointer.x, pointer.y);
+  }
+
+  // Instant zoom without animation for wheel
+  setZoomKonvaInstant(newZoom: number, pointerX: number, pointerY: number) {
+    if (!this.stage) return;
+
+    const oldZoom = this.stage.scaleX();
+    const oldPos = this.stage.position();
+
+    // Calculate the point in canvas coordinates that the pointer is pointing to
+    const mousePointTo = {
+      x: (pointerX - oldPos.x) / oldZoom,
+      y: (pointerY - oldPos.y) / oldZoom,
+    };
+
+    // Calculate new position to keep the pointer point stable
+    const newPos = {
+      x: pointerX - mousePointTo.x * newZoom,
+      y: pointerY - mousePointTo.y * newZoom,
+    };
+
+    this.stage.scale({ x: newZoom, y: newZoom });
+    this.stage.position(newPos);
+
+    this.zoom = newZoom;
+    this.clampPan();
+    this.drawGrid();
+  }
+
+  onZoomSelect(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    if (value === 'fit') {
+      this.fitToScreen();
+      return;
+    }
+    const newZoom = parseFloat(value);
+    const z = Math.max(this.minZoom, Math.min(newZoom, this.maxZoom));
+
+    if (this.gridSize * z < 8) return;
+
+    const containerW = this.stage.width();
+    const containerH = this.stage.height();
+    const targetX = (containerW - this.canvasWidth * z) / 2;
+    const targetY = (containerH - this.canvasHeight * z) / 2;
+
+    this.animateToView(z, targetX, targetY);
+  }
+
+  fitToScreen() {
+    if (!this.stage) return;
+
+    const containerW = this.stage.width();
+    const containerH = this.stage.height();
+    let newZoom = Math.min(containerW / this.canvasWidth, containerH / this.canvasHeight);
+
+    newZoom = newZoom * 0.9;
+    newZoom = Math.max(this.minZoom, Math.min(newZoom, this.maxZoom));
+
+    if (this.gridSize * newZoom < 8) {
+      newZoom = Math.max(newZoom, 8 / this.gridSize);
+    }
+
+    const targetX = (containerW - this.canvasWidth * newZoom) / 2;
+    const targetY = (containerH - this.canvasHeight * newZoom) / 2;
+
+    this.animateToView(newZoom, targetX, targetY);
+  }
+
+  // -------------------------
+  // Utility: Center the stage (called when zoom changes without a pivot)
+  // -------------------------
+  centerStage(newZoom: number) {
+    if (!this.stage) return;
+
+    const containerW = this.stage.width();
+    const containerH = this.stage.height();
+
+    // Calculate the position to center the scaled canvas
+    const targetX = (containerW - this.canvasWidth * newZoom) / 2;
+    const targetY = (containerH - this.canvasHeight * newZoom) / 2;
+
+    this.stage.position({ x: targetX, y: targetY });
+  }
+
+  // -------------------------
+  // Smooth zoom animation (used by fit and dropdown fixed zoom)
+  // -------------------------
+  animateToView(targetZoom: number, targetX: number, targetY: number) {
+    if (!this.stage) return;
+
+    const startZoom = this.zoom;
+    const startX = this.stage.x();
+    const startY = this.stage.y();
+
+    const diffZoom = targetZoom - startZoom;
+    const diffX = targetX - startX;
+    const diffY = targetY - startY;
+
+    const steps = 20;
+    let step = 0;
+
+    const animate = () => {
+      step++;
+      const t = step / steps;
+      const eased = t * t * (3 - 2 * t); // smoothstep easing
+
+      const currentZoom = startZoom + diffZoom * eased;
+      const currentX = startX + diffX * eased;
+      const currentY = startY + diffY * eased;
+
+      this.stage.scale({ x: currentZoom, y: currentZoom });
+      this.stage.position({ x: currentX, y: currentY });
+
+      this.zoom = currentZoom;
+      this.drawGrid();
+
+      if (step < steps) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }
+
+  // -------------------------
+  // Smooth zoom animation (used by wheel interaction, pivots around cursor)
+  // -------------------------
+  smoothZoomTo(targetZoom: number, clientX?: number | null, clientY?: number | null) {
+    if (!this.stage) return;
+
+    targetZoom = Math.max(this.minZoom, Math.min(targetZoom, this.maxZoom));
+
+    // Guard against making the grid too small
+    if (this.gridSize * targetZoom < 8) {
+      targetZoom = 8 / this.gridSize;
+      targetZoom = Math.max(targetZoom, this.minZoom);
+    }
+
+    const startZoom = this.zoom;
+    const diff = targetZoom - startZoom;
+
+    const container = this.getContainer();
+    if (!container) return;
+
+    // Determine pivot point for zoom
+    let cx: number;
+    let cy: number;
+
+    if (clientX === null || clientY === null || clientX === undefined || clientY === undefined) {
+      // If no pivot provided (like from fallback), use center of container
+      cx = container.clientWidth / 2;
+      cy = container.clientHeight / 2;
+    } else {
+      // Use provided pivot point (like from wheel event)
+      cx = clientX;
+      cy = clientY;
+    }
+
+    const steps = 12;
+    let step = 0;
+
+    const animate = () => {
+      step++;
+      const t = step / steps;
+      const eased = t * t * (3 - 2 * t); // smoothstep easing
+      const z = startZoom + diff * eased;
+
+      // Perform the Konva scale and pan operation
+      this.setZoomKonva(z, cx, cy);
+
+      if (step < steps) {
+        requestAnimationFrame(animate);
+      } else if (clientX === null || clientY === null || clientX === undefined || clientY === undefined) {
+        // Final adjustment: ensure perfectly centered if no pivot was used (fallback)
+        this.centerStage(targetZoom);
+        this.drawGrid();
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }
+
+  // -------------------------
+  // Core pivot zoom math + clamp
+  // -------------------------
+  setZoomKonva(newZoom: number, pivotX: number, pivotY: number) {
+    if (!this.stage) return;
+
+    const oldZoom = this.stage.scaleX();
+    const oldPos = this.stage.position();
+
+    // Calculate the point in canvas coordinates that the mouse is pointing to
+    const mousePointTo = {
+      x: (pivotX - oldPos.x) / oldZoom,
+      y: (pivotY - oldPos.y) / oldZoom,
+    };
+
+    // Calculate new position to keep the mouse point stable
+    const newPos = {
+      x: pivotX - mousePointTo.x * newZoom,
+      y: pivotY - mousePointTo.y * newZoom,
+    };
+
+    this.stage.scale({ x: newZoom, y: newZoom });
+    this.stage.position(newPos);
+
+    this.zoom = newZoom;
+    this.clampPan();
+    this.drawGrid();
+  }
+
+  // -------------------------
+  // Pan clamping (keeps canvas visible inside board-container)
+  // -------------------------
+  clampPan() {
+    const container = this.getContainer();
+    if (!container || !this.stage) return;
+
+    const containerW = container.clientWidth;
+    const containerH = container.clientHeight;
+
+    const scaledW = this.canvasWidth * this.zoom;
+    const scaledH = this.canvasHeight * this.zoom;
+
+    let x = this.stage.x();
+    let y = this.stage.y();
+
+    // Logic: Don't let the board fly completely off screen
+    if (scaledW <= containerW) {
+      // If canvas is smaller than container, center it
+      x = (containerW - scaledW) / 2;
+    } else {
+      // If canvas is larger, clamp to edges
+      if (x > 0) x = 0;
+      if (x < containerW - scaledW) x = containerW - scaledW;
+    }
+
+    if (scaledH <= containerH) {
+      // If canvas is smaller than container, center it
+      y = (containerH - scaledH) / 2;
+    } else {
+      // If canvas is larger, clamp to edges
+      if (y > 0) y = 0;
+      if (y < containerH - scaledH) y = containerH - scaledH;
+    }
+
+    this.stage.position({ x, y });
+  }
+
+  // Center the board initially (and after size changes)
+  resetPanToCenter() {
+    const container = this.getContainer();
+    if (!container || !this.stage) return;
+
+    const containerW = container.clientWidth;
+    const containerH = container.clientHeight;
+
+    const scaledW = this.canvasWidth * this.zoom;
+    const scaledH = this.canvasHeight * this.zoom;
+
+    this.stage.position({
+      x: (containerW - scaledW) / 2,
+      y: (containerH - scaledH) / 2
+    });
+    this.stage.scale({ x: this.zoom, y: this.zoom });
+  }
+
+  // -------------------------
+  // Grid drawing (Using Konva Lines)
+  // -------------------------
+  drawGrid() {
+    if (!this.gridLayer) return;
+
+    this.gridLayer.destroyChildren();
+
+    const bg = new Konva.Rect({
+      width: this.canvasWidth,
+      height: this.canvasHeight,
+      fill: this.backgroundColor,
+      listening: true,
+      id: 'board-background'
+    });
+    this.gridLayer.add(bg);
+
+    if (this.gridless) return;
+
+    const scaledGrid = this.gridSize * this.zoom;
+    if (scaledGrid < 8) return;
+
+    const strokeWidth = 1 / this.zoom;
+
+    // Draw vertical lines
+    for (let x = 0; x <= this.canvasWidth; x += this.gridSize) {
+      this.gridLayer.add(new Konva.Line({
+        points: [x, 0, x, this.canvasHeight],
+        stroke: '#e0e0e0',
+        strokeWidth: strokeWidth,
+        listening: false
+      }));
+    }
+
+    // Draw horizontal lines
+    for (let y = 0; y <= this.canvasHeight; y += this.gridSize) {
+      this.gridLayer.add(new Konva.Line({
+        points: [0, y, this.canvasWidth, y],
+        stroke: '#e0e0e0',
+        strokeWidth: strokeWidth,
+        listening: false
+      }));
+    }
   }
 
   toggleGrid() {
     this.gridless = !this.gridless;
-    this.gridLayer.visible(!this.gridless);
-    this.gridLayer.batchDraw();
+    this.drawGrid();
   }
 
-<<<<<<< HEAD
-  // ---------------- Zoom ----------------
-  onZoomSelect(event: any) {
-    const value = event.target.value;
-    if (value === 'fit') {
-      this.fitToScreen();
-      return;
-=======
   // -------------------------
   // Backend Logic
   // -------------------------
@@ -689,395 +1226,92 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       case 'redo':
         this.performRedo();
         break;
->>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
     }
-    const z = parseFloat(value);
-    if (!isNaN(z)) this.setZoom(z);
   }
 
-  private setZoom(scale: number) {
-    const old = this.currentZoom || 1;
-    this.currentZoom = scale;
+  private changeColor(color: string): void {
+    if (!this.stage) return;
+    const selectedNodes = this.transformer.nodes();
+    if (selectedNodes.length > 0) {
+      selectedNodes.forEach(node => {
+        node.setAttrs({ fill: color, stroke: color });
+      });
+      this.mainLayer.batchDraw();
+      this.saveStateToBackend('color_change');
+    }
+  }
 
-    const center = { x: this.stage.width() / 2, y: this.stage.height() / 2 };
-    const mousePointTo = {
-      x: (center.x - this.stage.x()) / old,
-      y: (center.y - this.stage.y()) / old
+  private saveStateToBackend(actionType: string): void {
+    if (!this.stage) return;
+    const stageJSON = this.stage.toJSON();
+    this.http.post(`${this.BACKEND_URL}/action`, {
+      action: actionType,
+      state: stageJSON
+    }).subscribe({
+      next: () => console.log(`State saved: ${actionType}`),
+      error: (err) => console.error('Error saving state', err)
+    });
+  }
+
+  private performUndo(): void {
+    this.http.post(`${this.BACKEND_URL}/undo`, {}).subscribe({
+      next: (state: any) => { if (state) this.loadCanvasState(state); },
+      error: (err) => console.error('Undo failed', err)
+    });
+  }
+
+  private performRedo(): void {
+    this.http.post(`${this.BACKEND_URL}/redo`, {}).subscribe({
+      next: (state: any) => { if (state) this.loadCanvasState(state); },
+      error: (err) => console.error('Redo failed', err)
+    });
+  }
+
+  private loadCanvasState(jsonState: any): void {
+    const container = this.getContainer();
+    if (!container) return;
+
+    this.stage.destroyChildren();
+
+    const newStage = Konva.Node.create(jsonState, container) as Konva.Stage;
+    this.stage = newStage;
+
+    const layers = this.stage.find('Layer') as Konva.Layer[];
+
+    this.mainLayer = layers.find(l => l.getChildren().length > 0 && !l.findOne('#board-background')) as Konva.Layer;
+    if (!this.mainLayer) {
+      this.mainLayer = new Konva.Layer();
+      this.stage.add(this.mainLayer);
+    }
+
+    this.gridLayer = layers.find(l => !!l.findOne('#board-background')) as Konva.Layer;
+    if (!this.gridLayer) {
+      this.gridLayer = new Konva.Layer();
+      this.stage.add(this.gridLayer);
+      this.gridLayer.moveToBottom();
+    }
+
+    this.transformer = new Konva.Transformer();
+    this.mainLayer.add(this.transformer);
+
+    this.initKonvaEvents();
+    this.drawGrid();
+  }
+
+  private exportFile(type: string, fileName: string): void {
+    if (!this.stage) return;
+    const canvasData = this.stage.toJSON();
+    this.http.post(`${this.BACKEND_URL}/export`, { name: fileName, type, data: canvasData })
+      .subscribe(res => console.log('File exported', res));
+  }
+
+  private uploadFile(file: File): void {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      this.loadCanvasState(content);
+      this.saveStateToBackend('file_loaded');
     };
-
-    this.stage.scale({ x: scale, y: scale });
-
-    const newPos = {
-      x: center.x - mousePointTo.x * scale,
-      y: center.y - mousePointTo.y * scale
-    };
-
-    this.stage.position(newPos);
-    this.stage.batchDraw();
+    reader.readAsText(file);
   }
-
-  private fitToScreen() {
-    const sw = this.stage.width();
-    const sh = this.stage.height();
-    const bw = 960;
-    const bh = 720;
-    const newZoom = Math.min(sw / bw, sh / bh);
-    this.setZoom(newZoom);
-  }
-
-  // ---------------- Transformer & selection ----------------
-  private createTransformer() {
-    this.transformer = new Konva.Transformer({
-      rotateEnabled: true,
-      enabledAnchors: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
-      anchorSize: 8,
-      borderDash: [6, 4]
-    });
-    // place on uiLayer so it appears above shapes
-    this.uiLayer.add(this.transformer);
-    this.transformer.hide();
-    this.uiLayer.draw();
-  }
-
-  private selectShape(node: Konva.Shape | null) {
-    // deselect previous
-    if (this.selectedShape && this.selectedShape !== node) {
-      if (this.transformer) {
-        this.transformer.nodes([]);
-        this.transformer.hide();
-      }
-    }
-
-    this.selectedShape = node;
-
-    if (!node) {
-      if (this.transformer) {
-        this.transformer.nodes([]);
-        this.transformer.hide();
-      }
-      return;
-    }
-
-    // attach transformer
-    if (this.transformer) {
-      this.transformer.nodes([node]);
-      this.transformer.show();
-      this.uiLayer.batchDraw();
-    }
-  }
-
-  // ---------------- Attach events + drawing (preview preserved) ----------------
-  private attachPointerEvents() {
-    // stage click: deselect when clicking background
-    this.stage.on('click tap', (e) => {
-      const target = e.target;
-
-      // If clicked one of the stage/layers (empty board), deselect
-      // Use includes + any cast to avoid TS union mismatch
-      if ([this.stage, this.gridLayer, this.layer, this.uiLayer].includes(target as any)) {
-        this.selectShape(null);
-        return;
-      }
-
-      // clicking on a shape should select it (if move/resize/select modes)
-      if (target && (target as any).getClassName && (target as any).getClassName() !== 'Stage') {
-        const node = target as Konva.Shape;
-        if (this.currentTool === 'select' || this.currentTool === 'move' || this.currentTool === 'resize') {
-          this.selectShape(node);
-        }
-      }
-    });
-
-    // allow dragging with move tool: shapes become draggable by default when created,
-    // but we only allow transform when tool is resize, otherwise transformer disabled anchors.
-    // We preserve the existing drawing preview & creation flow (as before)
-    this.stage.on('mousedown touchstart', () => {
-      const pos = this.stage.getPointerPosition();
-      if (!pos) return;
-
-      // If the current tool is a drawing tool, start drawing logic (preserve earlier behavior)
-      if (['rectangle', 'square', 'circle', 'ellipse', 'triangle', 'line'].includes(this.currentTool)) {
-        this.drawing = true;
-        this.startPoint = { x: pos.x, y: pos.y };
-        if (this.tempShape) { this.tempShape.destroy(); this.tempShape = null; }
-        return;
-      }
-    });
-
-    // pointer move: preview shape if drawing
-    this.stage.on('mousemove touchmove', () => {
-      if (!this.drawing || !this.startPoint) return;
-      const pos = this.stage.getPointerPosition();
-      if (!pos) return;
-
-      if (this.tempShape) { this.tempShape.destroy(); this.tempShape = null; }
-
-      const preview = {
-        fill: this.colorSrv.fillColorPreview(),
-        stroke: this.colorSrv.strokeColor,
-        strokeWidth: this.colorSrv.strokeWidth,
-        dash: [6, 4],
-        opacity: 0.6
-      };
-
-      const start = this.startPoint;
-      const end = pos;
-
-      switch (this.currentTool) {
-        case 'rectangle':
-        case 'square': {
-          const x = Math.min(start.x, end.x);
-          const y = Math.min(start.y, end.y);
-          let width = Math.abs(end.x - start.x);
-          let height = Math.abs(end.y - start.y);
-          if (this.currentTool === 'square') {
-            const side = Math.min(width, height);
-            width = height = side;
-          }
-          this.tempShape = (new Konva.Rect({
-            x, y, width, height,
-            fill: preview.fill,
-            stroke: preview.stroke,
-            strokeWidth: preview.strokeWidth,
-            dash: preview.dash,
-            opacity: preview.opacity
-          }) as unknown) as Konva.Shape;
-          break;
-        }
-        case 'circle': {
-          const dx = end.x - start.x;
-          const dy = end.y - start.y;
-          const radius = Math.sqrt(dx * dx + dy * dy) / 2;
-          const cx = (start.x + end.x) / 2;
-          const cy = (start.y + end.y) / 2;
-          this.tempShape = (new Konva.Circle({
-            x: cx, y: cy, radius,
-            fill: preview.fill,
-            stroke: preview.stroke,
-            strokeWidth: preview.strokeWidth,
-            dash: preview.dash,
-            opacity: preview.opacity
-          }) as unknown) as Konva.Shape;
-          break;
-        }
-        case 'ellipse': {
-          const rx = Math.abs(end.x - start.x) / 2;
-          const ry = Math.abs(end.y - start.y) / 2;
-          const cx = (start.x + end.x) / 2;
-          const cy = (start.y + end.y) / 2;
-          this.tempShape = (new Konva.Ellipse({
-            x: cx, y: cy, radiusX: rx, radiusY: ry,
-            fill: preview.fill,
-            stroke: preview.stroke,
-            strokeWidth: preview.strokeWidth,
-            dash: preview.dash,
-            opacity: preview.opacity
-          }) as unknown) as Konva.Shape;
-          break;
-        }
-        case 'triangle': {
-          const rx = Math.abs(end.x - start.x) / 2;
-          const ry = Math.abs(end.y - start.y) / 2;
-          const radius = Math.max(rx, ry);
-          const cx = (start.x + end.x) / 2;
-          const cy = (start.y + end.y) / 2;
-          this.tempShape = (new Konva.RegularPolygon({
-            x: cx, y: cy, sides: 3, radius,
-            fill: preview.fill, stroke: preview.stroke,
-            strokeWidth: preview.strokeWidth, dash: preview.dash,
-            opacity: preview.opacity
-          }) as unknown) as Konva.Shape;
-          break;
-        }
-        case 'line': {
-          this.tempShape = (new Konva.Line({
-            points: [start.x, start.y, end.x, end.y],
-            stroke: preview.stroke, strokeWidth: preview.strokeWidth,
-            dash: preview.dash, lineCap: 'round', lineJoin: 'round',
-            opacity: preview.opacity
-          }) as unknown) as Konva.Shape;
-          break;
-        }
-      }
-
-      if (this.tempShape) {
-        this.uiLayer.add(this.tempShape);
-        this.uiLayer.batchDraw();
-      }
-    });
-
-    // pointer up: finalize creation OR if move/resize mode, nothing special here (drag/transform handled per node)
-    this.stage.on('mouseup touchend', () => {
-      // finalize drawing
-      if (!this.drawing || !this.startPoint) {
-        this.drawing = false;
-        return;
-      }
-      this.drawing = false;
-      const pos = this.stage.getPointerPosition();
-      if (!pos) {
-        if (this.tempShape) { this.tempShape.destroy(); this.tempShape = null; this.uiLayer.batchDraw(); }
-        return;
-      }
-
-      const topLeft = { x: Math.min(this.startPoint.x, pos.x), y: Math.min(this.startPoint.y, pos.y) };
-      const bottomRight = { x: Math.max(this.startPoint.x, pos.x), y: Math.max(this.startPoint.y, pos.y) };
-      const center = { x: (this.startPoint.x + pos.x) / 2, y: (this.startPoint.y + pos.y) / 2 };
-
-      const payload: any = {
-        type: this.currentTool,
-        topLeft,
-        bottomRight,
-        center,
-        fillColor: this.colorSrv.fillColor,
-        outlineColor: this.colorSrv.strokeColor,
-        strokeWidth: this.colorSrv.strokeWidth
-      };
-
-      const tempRef = this.tempShape;
-      const sub = this.shapeTool.sendShapeToBackend(payload).subscribe({
-        next: (backendShape) => {
-          if (tempRef) tempRef.destroy();
-          // create Konva node from backend canonical shape
-          const real = this.shapeTool.createKonvaFromBackend(backendShape) as unknown as Konva.Shape;
-          // attach id and events then add to layer
-          this.setupRealShape(real, backendShape);
-          this.layer.add(real);
-          this.layer.batchDraw();
-        },
-        error: (err) => {
-          console.error('Create failed', err);
-          if (tempRef) { tempRef.destroy(); this.uiLayer.batchDraw(); }
-        },
-        complete: () => {
-          this.tempShape = null;
-        }
-      });
-      this.subs.push(sub);
-    });
-  }
-
-  // ---------------- setup events for the shape (move, resize, selection)
-  private setupRealShape(node: Konva.Shape, backendShape: any) {
-    // ensure node has an id attribute (store backend id)
-    if (backendShape.id != null) {
-      try { node.id(String(backendShape.id)); } catch {}
-      (node as any).attrs._shapeId = backendShape.id;
-    }
-
-    node.draggable(this.currentTool === 'move' || this.currentTool === 'select');
-
-    node.on('click tap', (e) => {
-      e.cancelBubble = true; // prevent stage click handler
-      this.selectShape(node);
-    });
-
-    node.on('dragend', () => {
-      const x = node.x();
-      const y = node.y();
-      const bbox = node.getClientRect({ relativeTo: this.layer });
-
-      const updatePayload: any = {
-        id: (node as any).attrs._shapeId ?? node.id(),
-        x,
-        y,
-        centerX: x + (bbox.width / 2),
-        centerY: y + (bbox.height / 2)
-      };
-
-      this.shapeTool.updateShape(updatePayload).subscribe({
-        next: () => {},
-        error: (err) => console.error('update move failed', err)
-      });
-    });
-
-    node.on('transformend', () => {
-      const scaleX = node.scaleX();
-      const scaleY = node.scaleY();
-
-      // width/height inference
-      let width = (node.width ? node.width() : (node.getClientRect().width || 0)) * scaleX;
-      let height = (node.height ? node.height() : (node.getClientRect().height || 0)) * scaleY;
-
-      node.scaleX(1);
-      node.scaleY(1);
-
-      const x = node.x();
-      const y = node.y();
-      const rotation = node.rotation();
-
-      const bbox = node.getClientRect();
-
-      const payload: any = {
-        id: (node as any).attrs._shapeId ?? node.id(),
-        x,
-        y,
-        width,
-        height,
-        rotation,
-        centerX: x + bbox.width / 2,
-        centerY: y + bbox.height / 2,
-        properties: {}
-      };
-
-      const cls = node.getClassName();
-      if (cls === 'Rect') {
-        payload.properties = { width, height };
-      } else if (cls === 'Circle') {
-        payload.properties = { radius: (width + height) / 4 };
-        payload.centerX = node.x();
-        payload.centerY = node.y();
-      } else if (cls === 'Ellipse') {
-        payload.properties = { radiusX: width / 2, radiusY: height / 2 };
-        payload.centerX = node.x();
-        payload.centerY = node.y();
-      } else if (cls === 'RegularPolygon' && (node as any).sides === 3) {
-        payload.properties = { radius: Math.max(width, height) / 2 };
-      }
-
-      this.shapeTool.updateShape(payload).subscribe({
-        next: () => {},
-        error: (err) => console.error('transform update failed', err)
-      });
-    });
-
-    node.draggable(true);
-  }
-
-  // allow external switching of tools
-  setTool(tool: typeof this.currentTool) {
-  this.currentTool = tool;
-
-  // Konva returns a Node[] (Group | Shape)
-  const childrenArray = this.layer.getChildren(); 
-
-  childrenArray.forEach((child: Konva.Node) => {
-
-    // Only shapes should be draggable
-    if (child instanceof Konva.Shape) {
-      if (this.currentTool === 'move') {
-        child.draggable(true);
-      } else if (this.currentTool === 'select') {
-        child.draggable(true);
-      } else {
-        child.draggable(false);
-      }
-    }
-  });
-
-  // Transformer control visibility
-  if (this.transformer) {
-    if (
-      this.currentTool === 'resize' ||
-      this.currentTool === 'select' ||
-      this.currentTool === 'move'
-    ) {
-      // allow transformer
-    } else {
-      this.transformer.hide();
-      this.uiLayer.batchDraw();
-    }
-  }
-}
-
 }
