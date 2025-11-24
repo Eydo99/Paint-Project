@@ -219,10 +219,33 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     });
 
     // لما يتسحب أو يتحول الشكل، احفظ التغييرات
-    this.stage.on('dragend transformend', () => {
-      this.saveStateToBackend('modify');
+    this.stage.on('dragend transformend', (e) => {
+      const target = e.target;
+      // تأكد أن الهدف ليس الـ stage نفسه أو الخلفية وأنه Shape
+      if (this.isShape(target)) {
+        this.updateShapePositionInBackend(target);
+      }
     });
+
   }
+
+
+
+  // ✨ NEW: Type guard to check if a node is a Shape
+  private isShape(node: Konva.Node): node is Konva.Shape {
+    return node instanceof Konva.Shape &&
+      !(node instanceof Konva.Stage) &&
+      !(node instanceof Konva.Layer) &&
+      node.id() !== 'board-background';
+  }
+
+// ✨ NEW: Type guard to check if a node is a Shape for formatShapeData
+  private isShapeForFormat(node: Konva.Node): node is Konva.Shape {
+    return node instanceof Konva.Shape &&
+      !(node instanceof Konva.Stage) &&
+      !(node instanceof Konva.Layer);
+  }
+
   // ✨ NEW: Convert stage position to canvas position (تحويل موضع الشاشة لموضع الـ canvas)
   // السبب: الماوس بيدينا إحداثيات على الشاشة، لكن احنا محتاجين إحداثيات على الـ canvas المنطقي
   // لازم نحسب الـ pan (موضع الـ stage) والـ zoom (التكبير)
@@ -255,7 +278,8 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
         return new Konva.Rect({
           ...defaultConfig,
           width: 0,      // نبدأ بعرض 0
-          height: 0      // نبدأ بارتفاع 0
+          height: 0,     // نبدأ بارتفاع 0
+          shapeType: 'rectangle'  // ✨ NEW: Set custom attribute
         });
 
       case 'square':
@@ -263,7 +287,8 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
         return new Konva.Rect({
           ...defaultConfig,
           width: 0,
-          height: 0
+          height: 0,
+          shapeType: 'square'  // ✨ NEW: Set custom attribute
         });
 
       case 'circle':
@@ -316,7 +341,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
         shape.width(width >= 0 ? size : -size);
         shape.height(height >= 0 ? size : -size);
       } else {
-        // مستطيل: عرض وارتفاع حر
+        // مست  طيل: عرض وارتفاع حر
         shape.width(Math.abs(width));
         shape.height(Math.abs(height));
         // اضبط الموضع لو المستخدم رسم للخلف أو لفوق
@@ -355,13 +380,10 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     this.mainLayer.batchDraw();
   }
 
-  // ✨ NEW: Send shape data to backend (إرسال بيانات الشكل للـ backend)
+// ✨ NEW: Send shape data to backend (إرسال بيانات الشكل للـ backend)
   private sendShapeToBackend(shape: Konva.Shape): void {
-    // جهز البيانات اللي هتتبعت
-    const shapeData = {
-      type: shape.getClassName(),        // نوع الشكل: 'Rect', 'Circle', etc.
-      properties: shape.getAttrs()           // كل الخصائص: {x, y, width, height, fill, ...}// وقت الإنشاء
-    };
+    // جهز البيانات اللي هتتبعت حسب الصيغة المطلوبة
+    const shapeData = this.formatShapeData(shape);
 
     console.log('Sending shape to backend:', shapeData);
 
@@ -371,7 +393,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
         console.log('Shape saved successfully:', response);
         // لو الـ backend رجع ID، احفظه في الشكل
         if (response && (response as any).id) {
-          shape.setAttr('Id', (response as any).id);
+          shape.setAttr('id', (response as any).id);
         }
       },
       error: (err) => {
@@ -380,6 +402,145 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  // ✨ NEW: Format shape data according to backend requirements (تنسيق بيانات الشكل حسب متطلبات الـ backend)
+  // ✨ NEW: Format shape data according to backend requirements (تنسيق بيانات الشكل حسب متطلبات الـ backend)
+  private formatShapeData(node: Konva.Node): any {
+    // تأكد أن الـ node هو Shape
+    if (!this.isShapeForFormat(node)) {
+      console.warn('Cannot format data for non-shape node:', node);
+      return null;
+    }
+
+    const shape = node as Konva.Shape;
+    const baseData = {
+      fillColor: shape.attrs.fill || '#ffffff',
+      outlineColor: shape.attrs.stroke || '#090101',
+      strokeWidth: shape.attrs.strokeWidth || 2,
+      x: shape.attrs.x || 0,
+      y: shape.attrs.y || 0
+    };
+
+    // احسب مركز الشكل
+    let centerX = 0;
+    let centerY = 0;
+
+    if (shape instanceof Konva.Rect) {
+      centerX = shape.attrs.x + (shape.attrs.width / 2);
+      centerY = shape.attrs.y + (shape.attrs.height / 2);
+
+      // تحقق إذا كان مربعاً من خلال الـ shapeType المخصص
+      const shapeType = shape.getAttr('shapeType');
+      if (shapeType === 'square') {
+        return {
+          ...baseData,
+          type: 'square',
+          centerX: centerX,
+          centerY: centerY
+        };
+      } else {
+        return {
+          ...baseData,
+          type: 'rectangle',
+          centerX: centerX,
+          centerY: centerY
+        };
+      }
+    }
+    else if (shape instanceof Konva.Circle) {
+      centerX = shape.attrs.x;
+      centerY = shape.attrs.y;
+      return {
+        ...baseData,
+        type: 'circle',
+        centerX: centerX,
+        centerY: centerY
+      };
+    }
+    else if (shape instanceof Konva.Ellipse) {
+      centerX = shape.attrs.x;
+      centerY = shape.attrs.y;
+      return {
+        ...baseData,
+        type: 'ellipse',
+        centerX: centerX,
+        centerY: centerY
+      };
+    }
+    else if (shape instanceof Konva.Line) {
+      // للخط، استخدم نقطة البداية كـ x,y والنهاية كـ center
+      const points = shape.attrs.points || [0, 0, 0, 0];
+      centerX = points[2] || 0;
+      centerY = points[3] || 0;
+      return {
+        ...baseData,
+        type: 'line',
+        centerX: centerX,
+        centerY: centerY
+      };
+    }
+    else if (shape instanceof Konva.RegularPolygon && shape.attrs.sides === 3) {
+      centerX = shape.attrs.x;
+      centerY = shape.attrs.y;
+      return {
+        ...baseData,
+        type: 'triangle',
+        centerX: centerX,
+        centerY: centerY
+      };
+    }
+
+    // افتراضي: ارجع البيانات الأساسية
+    return {
+      ...baseData,
+      type: shape.getClassName().toLowerCase(),
+      centerX: centerX,
+      centerY: centerY
+    };
+  }
+  // ✨ NEW: Update shape position in backend (تحديث موضع الشكل في الـ backend)
+  private updateShapePositionInBackend(shape: Konva.Shape): void {
+    const shapeId = shape.getAttr('id');
+    if (!shapeId) return;
+
+    let centerX = 0;
+    let centerY = 0;
+
+    // احسب المركز بناءً على نوع الشكل
+    if (shape instanceof Konva.Rect) {
+      centerX = shape.attrs.x + (shape.attrs.width / 2);
+      centerY = shape.attrs.y + (shape.attrs.height / 2);
+    }
+    else if (shape instanceof Konva.Circle || shape instanceof Konva.Ellipse ||
+      shape instanceof Konva.RegularPolygon) {
+      centerX = shape.attrs.x;
+      centerY = shape.attrs.y;
+    }
+    else if (shape instanceof Konva.Line) {
+      const points = shape.attrs.points || [0, 0, 0, 0];
+      centerX = points[2] || 0;
+      centerY = points[3] || 0;
+    }
+
+    const updateData = {
+      id: shapeId,
+      x: shape.attrs.x || 0,
+      y: shape.attrs.y || 0,
+      centerX: centerX,
+      centerY: centerY
+    };
+
+    console.log('Updating shape position in backend:', updateData);
+
+    // ابعت تحديث الموضع للـ backend
+    this.http.post(`${this.BACKEND_URL}/move`, updateData).subscribe({
+      next: (response) => {
+        console.log('Shape position updated successfully:', response);
+      },
+      error: (err) => {
+        console.error('Failed to update shape position:', err);
+      }
+    });
+  }
   // ✨ NEW: Method to receive tool change from toolbar (استقبال تغيير الأداة من الـ toolbar)
   onToolChange(tool: string): void {
     this.activeTool = tool;
@@ -821,17 +982,24 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
 
     switch (action) {
       case 'copy':
-        if (activeObject) {
-          const shapeData = activeObject.toObject();
-          this.http.post(`${this.BACKEND_URL}/copy`, shapeData).subscribe({
-            next: (copiedShapeData: any) => {
-              const newShape = Konva.Node.create(copiedShapeData);
-              this.mainLayer.add(newShape);
-              this.transformer.nodes([newShape]);
-              this.saveStateToBackend('copy');
-            },
-            error: (err) => console.error('Copy failed', err)
-          });
+        if (activeObject && this.isShapeForFormat(activeObject)) {
+          // استخدم الصيغة الجديدة لبيانات الشكل
+          const shapeData = this.formatShapeData(activeObject);
+          if (shapeData) {
+            this.http.post(`${this.BACKEND_URL}/copy`, shapeData).subscribe({
+              next: (copiedShapeData: any) => {
+                // استخدم Konva.Shape.create بدلاً من Konva.Node.create
+                const newShape = Konva.Shape.create(copiedShapeData);
+                this.mainLayer.add(newShape);
+                this.transformer.nodes([newShape]);
+                // احفظ ID الجديد إذا كان موجوداً في الرد
+                if (copiedShapeData.id) {
+                  newShape.setAttr('id', copiedShapeData.id);
+                }
+              },
+              error: (err) => console.error('Copy failed', err)
+            });
+          }
         }
         break;
 
