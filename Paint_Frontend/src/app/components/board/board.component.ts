@@ -31,7 +31,34 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
   private drawing = false;
   private startPoint: { x: number; y: number } | null = null;
 
+<<<<<<< HEAD
   // grid + zoom (kept from earlier)
+=======
+
+  private subscriptions: Subscription = new Subscription();
+  private readonly BACKEND_URL = 'http://localhost:8080/api';
+
+  // logical drawing area
+  canvasWidth = 960;
+  canvasHeight = 720;
+  backgroundColor = '#ffffff';
+
+  // ✨ NEW: Active tool from toolbar (الأداة النشطة من الـ Toolbar)
+  activeTool: string = 'select';
+
+  // ✨ NEW: Drawing state (حالة الرسم)
+  isDrawing = false;                    // هل المستخدم بيرسم دلوقتي؟
+  currentShape: Konva.Shape | null = null;  // الشكل اللي بيترسم حالياً
+  startX = 0;                           // نقطة البداية X
+  startY = 0;                           // نقطة البداية Y
+
+  // zoom / grid
+  zoom = 1;
+  minZoom = 0.4;
+  maxZoom = 5;
+  zoomStep = 0.1; // Slower zoom speed (was 0.5)
+  gridSize = 20;
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
   gridless = true;
   private gridSize = 20;
   zoomLevels = [
@@ -108,6 +135,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     const w = this.stage.width();
     const h = this.stage.height();
 
+<<<<<<< HEAD
     for (let x = 0; x <= w; x += size) {
       this.gridLayer.add(
         new Konva.Line({
@@ -126,6 +154,447 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
           strokeWidth: 1
         })
       );
+=======
+    // 1. Grid Layer (Background)
+    this.gridLayer = new Konva.Layer();
+    this.stage.add(this.gridLayer);
+
+    // 2. Main Layer (Shapes)
+    this.mainLayer = new Konva.Layer();
+    this.stage.add(this.mainLayer);
+
+    // 3. Transformer
+    this.transformer = new Konva.Transformer();
+    this.mainLayer.add(this.transformer);
+   //إنشاء Background
+    const bg = new Konva.Rect({
+      width: this.canvasWidth,
+      height: this.canvasHeight,
+      fill: this.backgroundColor,
+      listening: true,
+      id: 'board-background'
+    });
+    this.gridLayer.add(bg);
+    bg.moveToBottom();
+
+    this.initKonvaEvents();
+  }
+
+  // Helper method للحصول على Container بأمان
+  private getContainer(): HTMLDivElement | null {
+    if (!this.canvasRef?.nativeElement?.parentElement) {
+      return null;
+    }
+    return this.canvasRef.nativeElement.parentElement as HTMLDivElement;
+  }
+
+  private initKonvaEvents() {
+    //لو ضغط علي الباكجراوند او الستيدج بيلغي الاختيار
+    //غير كدا بيسيلكت الشكل
+    this.stage.on('click tap', (e) => {
+
+      if (e.target === this.stage || e.target.id() === 'board-background') {
+        this.transformer.nodes([]);
+        return;
+      }
+      if (e.target.getParent()?.className !== 'Transformer') {
+        this.transformer.nodes([e.target]);
+      }
+
+      // لو مش في select mode، ما تعملش selection
+      if (this.activeTool !== 'select' && this.activeTool !== 'move') {
+        return;
+      }
+
+    });
+
+
+    // ✨ NEW: Mouse down - بداية الرسم
+    this.stage.on('mousedown touchstart', (e) => {
+      // لو بنعمل pan أو في select mode، ما ترسمش
+      if (this.isPanning || this.activeTool === 'select' || this.activeTool === 'move') {
+        return;
+      }
+
+      // جيب موضع الماوس على الـ stage
+      const pos = this.stage.getPointerPosition();
+      if (!pos) return;
+
+      // حول من إحداثيات الشاشة لإحداثيات الـ canvas الفعلي
+      const canvasPos = this.getCanvasPosition(pos.x, pos.y);
+
+      this.isDrawing = true;
+      this.startX = canvasPos.x;
+      this.startY = canvasPos.y;
+
+      // أنشئ الشكل بناءً على الأداة النشطة
+      this.currentShape = this.createShape(this.activeTool, canvasPos.x, canvasPos.y);
+
+      if (this.currentShape) {
+        this.mainLayer.add(this.currentShape);
+      }
+    });
+
+    // ✨ NEW: Mouse move - تحديث الشكل أثناء الرسم
+    this.stage.on('mousemove touchmove', (e) => {
+      if (!this.isDrawing || !this.currentShape) return;
+
+      const pos = this.stage.getPointerPosition();
+      if (!pos) return;
+
+      const canvasPos = this.getCanvasPosition(pos.x, pos.y);
+
+      // حدث الشكل بناءً على موضع الماوس
+      this.updateShape(this.currentShape, this.startX, this.startY, canvasPos.x, canvasPos.y);
+    });
+
+    // ✨ NEW: Mouse up - نهاية الرسم
+    this.stage.on('mouseup touchend', (e) => {
+      if (!this.isDrawing || !this.currentShape) return;
+
+      this.isDrawing = false;
+
+      // ابعت بيانات الشكل للـ backend
+      this.sendShapeToBackend(this.currentShape);
+
+      // اختار الشكل الجديد
+      this.transformer.nodes([this.currentShape]);
+
+      this.currentShape = null;
+    });
+
+    // لما يتسحب أو يتحول الشكل، احفظ التغييرات
+    this.stage.on('dragend transformend', (e) => {
+      const target = e.target;
+      // تأكد أن الهدف ليس الـ stage نفسه أو الخلفية وأنه Shape
+      if (this.isShape(target)) {
+        this.updateShapePositionInBackend(target);
+      }
+    });
+
+  }
+
+
+
+  // ✨ NEW: Type guard to check if a node is a Shape
+  private isShape(node: Konva.Node): node is Konva.Shape {
+    return node instanceof Konva.Shape &&
+      !(node instanceof Konva.Stage) &&
+      !(node instanceof Konva.Layer) &&
+      node.id() !== 'board-background';
+  }
+
+// ✨ NEW: Type guard to check if a node is a Shape for formatShapeData
+  private isShapeForFormat(node: Konva.Node): node is Konva.Shape {
+    return node instanceof Konva.Shape &&
+      !(node instanceof Konva.Stage) &&
+      !(node instanceof Konva.Layer);
+  }
+
+  // ✨ NEW: Convert stage position to canvas position (تحويل موضع الشاشة لموضع الـ canvas)
+  // السبب: الماوس بيدينا إحداثيات على الشاشة، لكن احنا محتاجين إحداثيات على الـ canvas المنطقي
+  // لازم نحسب الـ pan (موضع الـ stage) والـ zoom (التكبير)
+  private getCanvasPosition(stageX: number, stageY: number): {x: number, y: number} {
+    const stagePos = this.stage.position();  // موضع الـ stage الحالي
+    const scale = this.stage.scaleX();       // مستوى التكبير
+
+    // المعادلة: (إحداثيات الشاشة - موضع الـ stage) / التكبير
+    return {
+      x: (stageX - stagePos.x) / scale,
+      y: (stageY - stagePos.y) / scale
+    };
+  }
+
+  // ✨ NEW: Create shape based on tool type (إنشاء الشكل بناءً على نوع الأداة)
+  private createShape(tool: string, x: number, y: number): Konva.Shape | null {
+    // الإعدادات الافتراضية لكل الأشكال
+    const defaultConfig = {
+      x: x,
+      y: y,
+      fill: '#ffffff',      // لون التعبئة (ابيض)
+      stroke: '#090101',    // لون الحدود (أسود)
+      strokeWidth: 2,
+      draggable: true       // يمكن سحب الشكل
+    };
+
+    switch(tool) {
+      case 'rect':
+        // مستطيل: عرض وارتفاع حر
+        return new Konva.Rect({
+          ...defaultConfig,
+          width: 0,      // نبدأ بعرض 0
+          height: 0,     // نبدأ بارتفاع 0
+          shapeType: 'rectangle'  // ✨ NEW: Set custom attribute
+        });
+
+      case 'square':
+        // مربع: العرض = الارتفاع
+        return new Konva.Rect({
+          ...defaultConfig,
+          width: 0,
+          height: 0,
+          shapeType: 'square'  // ✨ NEW: Set custom attribute
+        });
+
+      case 'circle':
+        // دائرة: نصف قطر واحد
+        return new Konva.Circle({
+          ...defaultConfig,
+          radius: 0
+        });
+
+      case 'ellipse':
+        // قطع ناقص: نصفي قطر مختلفين
+        return new Konva.Ellipse({
+          ...defaultConfig,
+          radiusX: 0,
+          radiusY: 0
+        });
+
+      case 'triangle':
+        // مثلث: polygon بـ 3 أضلاع
+        return new Konva.RegularPolygon({
+          ...defaultConfig,
+          sides: 3,
+          radius: 0
+        });
+
+      case 'line':
+        // خط: نقطتين
+        return new Konva.Line({
+          ...defaultConfig,
+          points: [x, y, x, y],  // من (x,y) إلى (x,y) - نقطة واحدة في البداية
+          fill: undefined,        // الخط ما عندوش تعبئة
+          strokeWidth: 3
+        });
+
+      default:
+        return null;
+    }
+  }
+
+  // ✨ NEW: Update shape while drawing (تحديث الشكل أثناء الرسم)
+  private updateShape(shape: Konva.Shape, startX: number, startY: number, endX: number, endY: number): void {
+    const width = endX - startX;    // العرض
+    const height = endY - startY;   // الارتفاع
+
+    if (shape instanceof Konva.Rect) {
+      // للمستطيلات والمربعات
+      if (this.activeTool === 'square') {
+        // مربع: خلي العرض = الارتفاع (أصغر قيمة)
+        const size = Math.min(Math.abs(width), Math.abs(height));
+        shape.width(width >= 0 ? size : -size);
+        shape.height(height >= 0 ? size : -size);
+      } else {
+        // مست  طيل: عرض وارتفاع حر
+        shape.width(Math.abs(width));
+        shape.height(Math.abs(height));
+        // اضبط الموضع لو المستخدم رسم للخلف أو لفوق
+        shape.x(width >= 0 ? startX : endX);
+        shape.y(height >= 0 ? startY : endY);
+      }
+    }
+    else if (shape instanceof Konva.Circle) {
+      // دائرة: نصف القطر = المسافة بين النقطتين / 2
+      // استخدام Pythagorean theorem: distance = √(width² + height²)
+      const radius = Math.sqrt(width * width + height * height) / 2;
+      shape.radius(radius);
+    }
+    else if (shape instanceof Konva.Ellipse) {
+      // قطع ناقص: نصفي قطر مختلفين
+      shape.radiusX(Math.abs(width) / 2);
+      shape.radiusY(Math.abs(height) / 2);
+      // حط المركز في نص المسافة
+      shape.x(startX + width / 2);
+      shape.y(startY + height / 2);
+    }
+    else if (shape instanceof Konva.RegularPolygon) {
+      // مثلث: نصف القطر = المسافة / 2
+      const radius = Math.sqrt(width * width + height * height) / 2;
+      shape.radius(radius);
+      // حط المركز في نص المسافة
+      shape.x(startX + width / 2);
+      shape.y(startY + height / 2);
+    }
+    else if (shape instanceof Konva.Line) {
+      // خط: حدث النقطتين
+      shape.points([startX, startY, endX, endY]);
+    }
+
+    // ارسم كل الـ layer مرة واحدة (أسرع من رسم كل شكل لوحده)
+    this.mainLayer.batchDraw();
+  }
+
+// ✨ NEW: Send shape data to backend (إرسال بيانات الشكل للـ backend)
+  private sendShapeToBackend(shape: Konva.Shape): void {
+    // جهز البيانات اللي هتتبعت حسب الصيغة المطلوبة
+    const shapeData = this.formatShapeData(shape);
+
+    console.log('Sending shape to backend:', shapeData);
+
+    // ابعت للـ backend
+    this.http.post(`${this.BACKEND_URL}/shape`, shapeData).subscribe({
+      next: (response) => {
+        console.log('Shape saved successfully:', response);
+        // لو الـ backend رجع ID، احفظه في الشكل
+        if (response && (response as any).id) {
+          shape.setAttr('id', (response as any).id);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to save shape:', err);
+      }
+    });
+  }
+
+  // ✨ NEW: Format shape data according to backend requirements (تنسيق بيانات الشكل حسب متطلبات الـ backend)
+  // ✨ NEW: Format shape data according to backend requirements (تنسيق بيانات الشكل حسب متطلبات الـ backend)
+  private formatShapeData(node: Konva.Node): any {
+    // تأكد أن الـ node هو Shape
+    if (!this.isShapeForFormat(node)) {
+      console.warn('Cannot format data for non-shape node:', node);
+      return null;
+    }
+
+    const shape = node as Konva.Shape;
+    const baseData = {
+      fillColor: shape.attrs.fill || '#ffffff',
+      outlineColor: shape.attrs.stroke || '#090101',
+      strokeWidth: shape.attrs.strokeWidth || 2,
+      x: shape.attrs.x || 0,
+      y: shape.attrs.y || 0
+    };
+
+    // احسب مركز الشكل
+    let centerX = 0;
+    let centerY = 0;
+
+    if (shape instanceof Konva.Rect) {
+      centerX = shape.attrs.x + (shape.attrs.width / 2);
+      centerY = shape.attrs.y + (shape.attrs.height / 2);
+
+      // تحقق إذا كان مربعاً من خلال الـ shapeType المخصص
+      const shapeType = shape.getAttr('shapeType');
+      if (shapeType === 'square') {
+        return {
+          ...baseData,
+          type: 'square',
+          centerX: centerX,
+          centerY: centerY
+        };
+      } else {
+        return {
+          ...baseData,
+          type: 'rectangle',
+          centerX: centerX,
+          centerY: centerY
+        };
+      }
+    }
+    else if (shape instanceof Konva.Circle) {
+      centerX = shape.attrs.x;
+      centerY = shape.attrs.y;
+      return {
+        ...baseData,
+        type: 'circle',
+        centerX: centerX,
+        centerY: centerY
+      };
+    }
+    else if (shape instanceof Konva.Ellipse) {
+      centerX = shape.attrs.x;
+      centerY = shape.attrs.y;
+      return {
+        ...baseData,
+        type: 'ellipse',
+        centerX: centerX,
+        centerY: centerY
+      };
+    }
+    else if (shape instanceof Konva.Line) {
+      // للخط، استخدم نقطة البداية كـ x,y والنهاية كـ center
+      const points = shape.attrs.points || [0, 0, 0, 0];
+      centerX = points[2] || 0;
+      centerY = points[3] || 0;
+      return {
+        ...baseData,
+        type: 'line',
+        centerX: centerX,
+        centerY: centerY
+      };
+    }
+    else if (shape instanceof Konva.RegularPolygon && shape.attrs.sides === 3) {
+      centerX = shape.attrs.x;
+      centerY = shape.attrs.y;
+      return {
+        ...baseData,
+        type: 'triangle',
+        centerX: centerX,
+        centerY: centerY
+      };
+    }
+
+    // افتراضي: ارجع البيانات الأساسية
+    return {
+      ...baseData,
+      type: shape.getClassName().toLowerCase(),
+      centerX: centerX,
+      centerY: centerY,
+      angle: shape.attrs.rotation || 0  // ✨ ADD THIS LINE
+    };
+  }
+  // ✨ NEW: Update shape position in backend (تحديث موضع الشكل في الـ backend)
+  private updateShapePositionInBackend(shape: Konva.Shape): void {
+    const shapeId = shape.getAttr('id');
+    if (!shapeId) return;
+
+    let centerX = 0;
+    let centerY = 0;
+
+    // احسب المركز بناءً على نوع الشكل
+    if (shape instanceof Konva.Rect) {
+      centerX = shape.attrs.x + (shape.attrs.width / 2);
+      centerY = shape.attrs.y + (shape.attrs.height / 2);
+    }
+    else if (shape instanceof Konva.Circle || shape instanceof Konva.Ellipse ||
+      shape instanceof Konva.RegularPolygon) {
+      centerX = shape.attrs.x;
+      centerY = shape.attrs.y;
+    }
+    else if (shape instanceof Konva.Line) {
+      const points = shape.attrs.points || [0, 0, 0, 0];
+      centerX = points[2] || 0;
+      centerY = points[3] || 0;
+    }
+
+    const updateData = {
+      id: shapeId,
+      x: shape.attrs.x || 0,
+      y: shape.attrs.y || 0,
+      centerX: centerX,
+      centerY: centerY
+    };
+
+    console.log('Updating shape position in backend:', updateData);
+
+    // ابعت تحديث الموضع للـ backend
+    this.http.post(`${this.BACKEND_URL}/move`, updateData).subscribe({
+      next: (response) => {
+        console.log('Shape position updated successfully:', response);
+      },
+      error: (err) => {
+        console.error('Failed to update shape position:', err);
+      }
+    });
+  }
+  // ✨ NEW: Method to receive tool change from toolbar (استقبال تغيير الأداة من الـ toolbar)
+  onToolChange(tool: string): void {
+    this.activeTool = tool;
+
+    // لو رجعنا لـ select mode، الغي الاختيار
+    if (tool === 'select') {
+      this.transformer.nodes([]);
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
     }
 
     this.gridLayer.visible(!this.gridless);
@@ -138,12 +607,89 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     this.gridLayer.batchDraw();
   }
 
+<<<<<<< HEAD
   // ---------------- Zoom ----------------
   onZoomSelect(event: any) {
     const value = event.target.value;
     if (value === 'fit') {
       this.fitToScreen();
       return;
+=======
+  // -------------------------
+  // Backend Logic
+  // -------------------------
+  private setupSubscriptions(): void {
+    this.subscriptions.add(
+      this.canvasService.action$.subscribe(action => this.handleAction(action))
+    );
+    this.subscriptions.add(
+      this.canvasService.color$.subscribe(color => this.changeColor(color))
+    );
+    this.subscriptions.add(
+      this.canvasService.save$.subscribe(data => this.exportFile(data.type, data.fileName))
+    );
+    this.subscriptions.add(
+      this.canvasService.load$.subscribe(file => this.uploadFile(file))
+    );
+
+
+
+    this.subscriptions.add(
+      this.canvasService.tool$.subscribe(tool => this.onToolChange(tool))
+    );
+  }
+
+  private handleAction(action: string): void {
+    if (!this.stage) return;
+    const selectedNodes = this.transformer.nodes();
+    const activeObject = selectedNodes.length > 0 ? selectedNodes[0] : null;
+
+    switch (action) {
+      case 'copy':
+        if (activeObject && this.isShapeForFormat(activeObject)) {
+          // استخدم الصيغة الجديدة لبيانات الشكل
+          const shapeData = this.formatShapeData(activeObject);
+          if (shapeData) {
+            this.http.post(`${this.BACKEND_URL}/copy`, shapeData).subscribe({
+              next: (copiedShapeData: any) => {
+                // استخدم Konva.Shape.create بدلاً من Konva.Node.create
+                const newShape = Konva.Shape.create(copiedShapeData);
+                this.mainLayer.add(newShape);
+                this.transformer.nodes([newShape]);
+                // احفظ ID الجديد إذا كان موجوداً في الرد
+                if (copiedShapeData.id) {
+                  newShape.setAttr('id', copiedShapeData.id);
+                }
+              },
+              error: (err) => console.error('Copy failed', err)
+            });
+          }
+        }
+        break;
+
+      case 'delete':
+        if (activeObject) {
+          activeObject.destroy();
+          this.transformer.nodes([]);
+          this.saveStateToBackend('delete');
+        }
+        break;
+
+      case 'clear':
+        this.mainLayer.destroyChildren();
+        this.mainLayer.add(this.transformer);
+        this.transformer.nodes([]);
+        this.saveStateToBackend('clear');
+        break;
+
+      case 'undo':
+        this.performUndo();
+        break;
+
+      case 'redo':
+        this.performRedo();
+        break;
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
     }
     const z = parseFloat(value);
     if (!isNaN(z)) this.setZoom(z);

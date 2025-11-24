@@ -29,4 +29,8 @@ public class moveCommand implements Command {
         shape.move(this.oldX, this.oldY,this.oldCenterX,this.oldCenterY);
     }
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416

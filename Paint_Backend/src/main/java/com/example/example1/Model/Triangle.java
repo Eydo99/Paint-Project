@@ -13,18 +13,24 @@ public class Triangle extends shape {
         this.height=calculateHeight(this.y,this.centerY );
     }
 
+<<<<<<< HEAD
     public double getHeight() {
         return height;
     }
+=======
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
 
     public void setHeight(double height) {
         this.height = height;
     }
 
+<<<<<<< HEAD
     public double getBase() {
         return base;
     }
 
+=======
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
     public void setBase(double base) {
         this.base = base;
     }
@@ -77,4 +83,8 @@ public class Triangle extends shape {
     "centerX":34,
     "centerY":76
 }
+<<<<<<< HEAD
  */
+=======
+ */
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416

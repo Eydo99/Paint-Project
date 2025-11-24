@@ -55,4 +55,8 @@ public class Circle extends shape {
     "centerX":34,
     "centerY":76
 }
+<<<<<<< HEAD
  */
+=======
+ */
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416

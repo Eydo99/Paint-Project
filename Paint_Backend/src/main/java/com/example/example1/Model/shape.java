@@ -6,7 +6,7 @@ import java.util.Map;
 
 public abstract class shape implements Cloneable {
     protected String type;
-    protected int id;
+    protected String id;
     protected double x;
     protected double y;
     protected double centerX;
@@ -65,11 +65,11 @@ public abstract class shape implements Cloneable {
         this.type = name;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -121,4 +121,8 @@ public abstract class shape implements Cloneable {
     }
     public abstract void resize(double x, double y,double centerX,double centerY,Map<String,Object> props);
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416

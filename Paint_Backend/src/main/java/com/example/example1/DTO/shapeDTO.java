@@ -4,7 +4,7 @@ import java.util.Map;
 
 public class shapeDTO {
 
-    private int id;
+    private String id;
     private String type;
     private String fillColor;
     private String outlineColor;
@@ -31,6 +31,13 @@ public class shapeDTO {
         this.angle = angle;
     }
 
+<<<<<<< HEAD
+=======
+    private double centerX;
+    private double centerY;
+    private double angle;
+
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
     public double getX() {
         return x;
     }
@@ -67,10 +74,10 @@ public class shapeDTO {
     }
 
     public void setType(String type) {this.type = type;}
-    public int getId() {
+    public String getId() {
         return id;
     }
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
     public String getFillColor() {

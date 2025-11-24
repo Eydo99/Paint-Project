@@ -27,7 +27,7 @@ public class shapeService {
     public shape createShape(shapeDTO DTO)
     {
         shape newShape =shapeFactory.createShape(DTO.getType());
-        newShape.setId(nextID++);
+        newShape.setId(String.valueOf(nextID++));
         newShape.setType(DTO.getType());
         newShape.setX(DTO.getX());
         newShape.setY(DTO.getY());
@@ -56,7 +56,7 @@ public class shapeService {
 
     private shape getShapeById(int id)
     {
-        return shapes.stream().filter(shape -> shape.getId()==id).findFirst().orElseThrow(()->new RuntimeException("Shape not found"));
+        return shapes.stream().filter(shape ->  shape.getId().equals(String.valueOf(id))).findFirst().orElseThrow(()->new RuntimeException("Shape not found"));
     }
 
     public shape getShape(int id) {
@@ -66,7 +66,11 @@ public class shapeService {
     public shape copyShape(int id) {
         shape originalShape=getShapeById(id);
         shape clone=originalShape.clone();
+<<<<<<< HEAD
         clone.setId(nextID++);
+=======
+        clone.setId(String.valueOf(nextID++));
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
         shapes.add(clone);
         return clone;
     }
@@ -87,4 +91,8 @@ public class shapeService {
         undoStack.push(command);
     }
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416

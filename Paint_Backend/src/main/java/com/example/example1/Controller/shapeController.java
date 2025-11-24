@@ -14,7 +14,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/shape")
+<<<<<<< HEAD
 @CrossOrigin(origins = "http://localhost:4200") // allow Angular frontend
+=======
+@CrossOrigin(origins = "http://localhost:4200")
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
 public class shapeController {
 
     @Autowired
@@ -54,4 +58,8 @@ public class shapeController {
     public void resizeShape(@RequestBody resizeDTO dto) {
         shapeService.resizeShape(dto);
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
