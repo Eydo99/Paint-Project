@@ -5,7 +5,7 @@ import com.example.example1.Model.shape;
 import java.util.List;
 
 public class deleteCommand implements Command {
-    private final shape shape;
+    public final shape shape;
     private final List<shape> shapes;
 
     public deleteCommand(List<shape> shapes, shape shape) {
@@ -19,5 +19,10 @@ public class deleteCommand implements Command {
 
     public void undo() {
         shapes.add(shape);
+    }
+
+    @Override
+    public shape getShape() {
+        return shape;
     }
 }

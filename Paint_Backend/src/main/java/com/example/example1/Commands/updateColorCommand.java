@@ -4,7 +4,7 @@ import com.example.example1.Model.shape;
 
 public class updateColorCommand implements Command {
 
-    private final shape shape;
+    public final shape shape;
     private final String oldFillColor, oldOutlineColor,newFillColor,newOutlineColor;
     private final int newStrokeWidth,oldStrokeWidth;
 
@@ -23,6 +23,11 @@ public class updateColorCommand implements Command {
     }
     public void undo() {
         shape.upadteColor(oldFillColor,oldOutlineColor,oldStrokeWidth);
+    }
+
+    @Override
+    public shape getShape() {
+        return shape;
     }
 
 }

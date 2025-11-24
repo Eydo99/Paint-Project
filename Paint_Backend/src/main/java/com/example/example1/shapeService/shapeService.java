@@ -40,9 +40,16 @@ public class shapeService {
     }
 
 
-    public void delete(int id) {
+    public void deleteShape(int id) {
         shape shape = getShapeById(id);
         commandManager.execute(new deleteCommand(this.shapes, shape));
+    }
+
+    public void deleteAll()
+    {
+        commandManager.clear();
+        shapes.clear();
+        nextID = 1;
     }
 
 
@@ -75,7 +82,14 @@ public class shapeService {
         commandManager.execute(new updateColorCommand(shape,dto.getFillColor(), dto.getOutlineColor(),dto.getStrokeWidth()));
     }
 
-
+    public shape undo()
+    {
+       return commandManager.undo();
+    }
+    public shape redo()
+    {
+       return commandManager.redo();
+    }
 
 
     private shape getShapeById(int id) {

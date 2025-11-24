@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class updateCommand implements Command {
-    private final shape shape;
+    public final shape shape;
     private final double oldX, oldY, oldCenterX, oldCenterY;
     private final double newX, newY, newCenterX, newCenterY;
     private final Map<String, Object> oldProps, newProps;
@@ -36,5 +36,10 @@ public class updateCommand implements Command {
     @Override
     public void undo() {
         shape.update(oldX,oldY,oldCenterX,oldCenterY,oldAngle,oldProps);
+    }
+
+    @Override
+    public shape getShape() {
+        return shape;
     }
 }

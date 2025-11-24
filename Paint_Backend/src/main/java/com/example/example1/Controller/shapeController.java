@@ -32,7 +32,12 @@ public class shapeController {
 
     @DeleteMapping("/delete/{id}")
     public void deleteShape(@PathVariable int id) {
-        shapeService.delete(id);
+        shapeService.deleteShape(id);
+    }
+
+    @DeleteMapping("/delete")
+    public void deleteAllShapes() {
+        shapeService.deleteAll();
     }
 
     @GetMapping("/{id}")
@@ -53,6 +58,16 @@ public class shapeController {
     @PutMapping("/updateColor")
     public void updateColor(@RequestBody updateColorDTO dto) {
         shapeService.updateColor(dto);
+    }
+
+    @PostMapping("/undo")
+    public shape undo() {
+       return  shapeService.undo();
+    }
+
+    @PostMapping("/redo")
+    public shape redo() {
+       return  shapeService.redo();
     }
 
 }

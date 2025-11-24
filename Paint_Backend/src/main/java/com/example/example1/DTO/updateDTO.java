@@ -71,10 +71,10 @@ public class updateDTO {
 /*
 {
     "id":"2",
-    "x": 21,
-    "y": 45,
-    "centerX":34,
-    "centerY":76,
+    "x": 55,
+    "y": 55,
+    "centerX":55,
+    "centerY":55,
     "angle":55,
     "properties":
     {

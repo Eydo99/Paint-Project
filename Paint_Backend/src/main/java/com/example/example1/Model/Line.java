@@ -86,5 +86,4 @@ public class Line extends shape {
     "centerX":34,
     "centerY":76
 }
-<<<<<<< HEAD
  */

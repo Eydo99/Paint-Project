@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class addCommand implements Command {
-    private final shape shape;
+    public final shape shape;
     private final List<shape> shapes;
 
     public addCommand(List<shape> shapes, shape shape) {
@@ -22,5 +22,8 @@ public class addCommand implements Command {
         shapes.remove(shape);
     }
 
-
+    @Override
+    public shape getShape() {
+        return shape;
+    }
 }
