@@ -18,6 +18,9 @@ public class shapeDTO {
     private String fontWeight;
     private String fontStyle;
     private int fontSize;
+    private double centerX;
+    private double centerY;
+    private double angle;
 
 
     public double getAngle() {
@@ -27,10 +30,6 @@ public class shapeDTO {
     public void setAngle(double angle) {
         this.angle = angle;
     }
-
-    private double centerX;
-    private double centerY;
-    private double angle;
 
     public double getX() {
         return x;

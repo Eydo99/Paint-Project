@@ -14,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/shape")
+@CrossOrigin(origins = "http://localhost:4200") // allow Angular frontend
 public class shapeController {
 
     @Autowired
