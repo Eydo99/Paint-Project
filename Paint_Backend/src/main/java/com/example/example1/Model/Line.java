@@ -23,7 +23,15 @@ public class Line extends shape {
         return props;
     }
 
-    private double calculateXEnd(double x,double centerX)
+    public void setXEnd(double xEnd) {
+        this.xEnd = xEnd;
+    }
+
+    public void setYEnd(double yEnd) {
+        this.yEnd = yEnd;
+    }
+
+    private double calculateXEnd(double x, double centerX)
     {
         return Math.abs(2*centerX-x);
     }
@@ -51,15 +59,17 @@ public class Line extends shape {
         return clone;
     }
 
-
     @Override
-    public void resize(double x,double y, double centerX,double centerY,Map<String,Object> props)
+    public void update(double x, double y, double centerX, double centerY, double angle, Map<String, Object> props)
     {
         setCenterX(centerX);
         setCenterY(centerY);
         setX(x);
         setY(y);
         setLength((((Number)props.get("length")).doubleValue()));
+        setXEnd((((Number)props.get("xEnd")).doubleValue()));
+        setYEnd((((Number)props.get("yEnd")).doubleValue()));
+        setAngle(angle);
     }
 
 
@@ -76,4 +86,5 @@ public class Line extends shape {
     "centerX":34,
     "centerY":76
 }
+<<<<<<< HEAD
  */

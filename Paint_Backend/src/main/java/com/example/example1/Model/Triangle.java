@@ -18,6 +18,7 @@ public class Triangle extends shape {
         this.height = height;
     }
 
+
     public void setBase(double base) {
         this.base = base;
     }
@@ -47,8 +48,9 @@ public class Triangle extends shape {
         return clone;
     }
 
+
     @Override
-    public void resize(double x, double y, double centerX, double centerY, Map<String,Object> props)
+    public void update(double x, double y, double centerX, double centerY, double angle, Map<String, Object> props)
     {
         setCenterX(centerX);
         setCenterY(centerY);
@@ -56,6 +58,7 @@ public class Triangle extends shape {
         setY(y);
         setBase(((Number)props.get("base")).doubleValue());
         setHeight(((Number)props.get("height")).doubleValue());
+        setAngle(angle);
     }
 }
 
@@ -70,4 +73,5 @@ public class Triangle extends shape {
     "centerX":34,
     "centerY":76
 }
+<<<<<<< HEAD
  */

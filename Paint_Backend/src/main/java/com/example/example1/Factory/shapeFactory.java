@@ -11,7 +11,7 @@ public class shapeFactory {
             case "square" -> new Square();
             case "triangle" -> new Triangle();
             case "line" -> new Line();
-            case "text" -> new Text();
+           // case "text" -> new Text();
             default -> null;
         };
     }

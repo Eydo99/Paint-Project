@@ -222,18 +222,22 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
 
     // âœ… FIXED: Transformend - works for both resize AND rotate
     this.stage.on('transformend', (e) => {
-      const target = e.target;
+      // ⚠️ IMPORTANT: e.target is the Transformer, not the shape!
+      // We need to get the actual transformed shapes from transformer.nodes()
+      const transformedShapes = this.transformer.nodes();
 
-      console.log('🔍 Transform ended, target:', target.getClassName());
+      console.log('🔍 Transform ended');
       console.log('🔍 Active tool:', this.activeTool);
-      console.log('🔍 Is shape?', this.isShape(target));
+      console.log('🔍 Transformed shapes count:', transformedShapes.length);
 
-      if (this.isShape(target)) {
-        // âœ… REMOVED the mode restriction - now works in any mode!
-        console.log('✅ Shape transformed (resized or rotated)');
-        console.log('📊 New shape data:', this.formatShapeData(target));
-        this.updateShapePositionInBackend(target);
-      }
+      // Update each transformed shape
+      transformedShapes.forEach(node => {
+        if (this.isShape(node)) {
+          console.log('✅ Shape transformed (resized or rotated)');
+          console.log('📊 New shape data:', this.formatShapeData(node));
+          this.updateShapePositionInBackend(node);
+        }
+      });
     });
   }
 
@@ -642,7 +646,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     // console.log('  Properties:', properties);
     console.log('  Full data:', updateData);
 
-    this.http.put(`${this.BACKEND_URL}/move`, updateData).subscribe({
+    this.http.put(`${this.BACKEND_URL}/updateShape`, updateData).subscribe({
       next: (response) => {
         console.log('✅ Shape updated successfully in backend:', response);
       },
