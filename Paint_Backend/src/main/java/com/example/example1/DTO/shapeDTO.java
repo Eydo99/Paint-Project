@@ -4,12 +4,14 @@ import java.util.Map;
 
 public class shapeDTO {
 
-    private int id;
+    private String id;
     private String type;
     private String fillColor;
     private String outlineColor;
     private int strokeWidth;
     private Map<String,Object> properties;
+    private double x;
+    private double y;
     private String content;
     private String fontFamily;
     private String fontColor;
@@ -17,15 +19,59 @@ public class shapeDTO {
     private String fontStyle;
     private int fontSize;
 
+
+    public double getAngle() {
+        return angle;
+    }
+
+    public void setAngle(double angle) {
+        this.angle = angle;
+    }
+
+    private double centerX;
+    private double centerY;
+    private double angle;
+
+    public double getX() {
+        return x;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+
+    public double getCenterX() {
+        return centerX;
+    }
+
+    public void setCenterX(double centerX) {
+        this.centerX = centerX;
+    }
+
+    public double getCenterY() {
+        return centerY;
+    }
+
+    public void setCenterY(double centerY) {
+        this.centerY = centerY;
+    }
     public String getType() {
         return type;
     }
 
     public void setType(String type) {this.type = type;}
-    public int getId() {
+    public String getId() {
         return id;
     }
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
     public String getFillColor() {

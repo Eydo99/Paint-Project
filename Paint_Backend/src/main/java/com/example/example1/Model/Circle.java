@@ -8,33 +8,51 @@ public class Circle extends shape {
 
     @Override
     public void setProperties(Map<String, Object> props) {
-        this.x=((Number)props.get("x")).doubleValue();
-        this.y=((Number)props.get("y")).doubleValue();
-        this.centerX=((Number)props.get("centerX")).doubleValue();
-        this.centerY=((Number)props.get("centerY")).doubleValue();
         this.radius=calculateRadius(this.y,this.centerY);
-        this.angle=0;
     }
 
     @Override
     public Map<String, Object> getProperties() {
         Map<String,Object> props=new HashMap<>();
-        props.put("x",this.x);
-        props.put("y",this.y);
-        props.put("centerX",this.centerX);
-        props.put("centerY",this.centerY);
         props.put("radius",this.radius);
-        props.put("angle",this.angle);
         return props;
     }
-/*
+
     public void setRadius(double radius) {
         this.radius = radius;
     }
 
- */
-
     private double calculateRadius(double y,double centerY) {
         return Math.abs(y-centerY);
     }
+    @Override
+    public shape clone()
+    {
+        Circle clone=(Circle)super.clone();
+        clone.radius=this.radius;
+        return clone;
+    }
+
+    @Override
+    public void resize(double x,double y, double centerX,double centerY,Map<String,Object> props)
+    {
+        setCenterX(centerX);
+        setCenterY(centerY);
+        setX(x);
+        setY(y);
+        setRadius((((Number)props.get("radius")).doubleValue()));
+    }
 }
+
+/*
+{
+    "type":"circle",
+    "fillColor": "green",
+    "outlineColor": "red",
+    "strokeWidth": 1,
+    "x": 21,
+    "y": 45,
+    "centerX":34,
+    "centerY":76
+}
+ */

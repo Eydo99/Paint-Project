@@ -10,10 +10,6 @@ public class Rectangle extends shape {
 
     @Override
     public void setProperties(Map<String,Object> props) {
-        this.x=((Number)props.get("x")).doubleValue();
-        this.y=((Number)props.get("y")).doubleValue();
-        this.centerX=((Number)props.get("centerX")).doubleValue();
-        this.centerY=((Number)props.get("centerY")).doubleValue();
         this.length = calculateLength(this.x,this.centerX);
         this.width = calculateWidth(this.y,this.centerY);
         this.angle=0;
@@ -21,17 +17,11 @@ public class Rectangle extends shape {
     @Override
     public Map<String, Object> getProperties() {
         Map<String,Object> props=new HashMap<>();
-        props.put("x",this.x);
-        props.put("y",this.y);
-        props.put("centerX",this.centerX);
-        props.put("centerY",this.centerY);
         props.put("length",this.length);
         props.put("width",this.width);
-        props.put("angle",this.angle);
         return props;
     }
 
-/*
     public void setLength(double length) {
         this.length = length;
     }
@@ -41,7 +31,6 @@ public class Rectangle extends shape {
         this.width = width;
     }
 
- */
 
     private double calculateLength(double x,double centerX) {
         return 2*Math.abs(x-centerX);
@@ -49,4 +38,36 @@ public class Rectangle extends shape {
     private double calculateWidth(double y,double centerY) {
         return 2*Math.abs(y-centerY);
     }
+
+    @Override
+    public shape clone() {
+        Rectangle clone=(Rectangle)super.clone();
+        clone.length=this.length;
+        clone.width=this.width;
+        return clone;
+    }
+
+    @Override
+    public void resize(double x,double y, double centerX,double centerY,Map<String,Object> props)
+    {
+        setCenterX(centerX);
+        setCenterY(centerY);
+        setX(x);
+        setY(y);
+        setWidth((((Number)props.get("width")).doubleValue()));
+        setLength((((Number)props.get("length")).doubleValue()));
+    }
 }
+
+/*
+{
+    "type":"rectangle",
+    "fillColor": "green",
+    "outlineColor": "red",
+    "strokeWidth": 1,
+    "x": 21,
+    "y": 45,
+    "centerX":34,
+    "centerY":76
+}
+ */

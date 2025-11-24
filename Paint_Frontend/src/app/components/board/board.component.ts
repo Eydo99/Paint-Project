@@ -29,7 +29,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
 
 
   private subscriptions: Subscription = new Subscription();
-  private readonly BACKEND_URL = 'http://localhost:8080/api/canvas';
+  private readonly BACKEND_URL = 'http://localhost:8080/api';
 
   // logical drawing area
   canvasWidth = 960;
@@ -494,7 +494,8 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       ...baseData,
       type: shape.getClassName().toLowerCase(),
       centerX: centerX,
-      centerY: centerY
+      centerY: centerY,
+      angle: shape.attrs.rotation || 0  // ✨ ADD THIS LINE
     };
   }
   // ✨ NEW: Update shape position in backend (تحديث موضع الشكل في الـ backend)
