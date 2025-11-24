@@ -12,28 +12,25 @@ public class Text extends shape {
     @Override
     public void setProperties(Map<String,Object> props)
     {
-        this.x=((Number)props.get("x")).doubleValue();
-        this.y=((Number)props.get("y")).doubleValue();
-        this.centerX=((Number)props.get("centerX")).doubleValue();
-        this.centerY=((Number)props.get("centerY")).doubleValue();
         this.content=((String)props.get("content"));
         this.fontFamily=((String)props.get("fontFamily"));
         this.fontColor=((String)props.get("fontColor"));
         this.fontWeight=((String)props.get("fontWeight"));
         this.fontStyle=((String)props.get("fontStyle"));
         this.fontSize=((Number)props.get("fontSize")).intValue();
-        this.angle=(0);
     }
 
+    public int getFontSize() {
+        return fontSize;
+    }
+
+    public void setFontSize(int fontSize) {
+        this.fontSize = fontSize;
+    }
 
     public Map<String,Object> getProperties()
     {
         Map<String,Object> props = new HashMap<>();
-        props.put("x",x);
-        props.put("y",y);
-        props.put("centerX",centerX);
-        props.put("centerY",centerY);
-        props.put("angle",angle);
         props.put("content",content);
         props.put("fontFamily",fontFamily);
         props.put("fontColor",fontColor);
@@ -42,4 +39,45 @@ public class Text extends shape {
         props.put("fontSize",fontSize);
         return props;
     }
+
+    @Override
+    public shape clone()
+    {
+        Text clone=(Text)super.clone();
+        clone.content=content;
+        clone.fontFamily=fontFamily;
+        clone.fontColor=fontColor;
+        clone.fontWeight=fontWeight;
+        clone.fontStyle=fontStyle;
+        clone.fontSize=fontSize;
+        return clone;
+    }
+
+    @Override
+    public void resize(double x,double y, double centerX,double centerY,Map<String,Object> props)
+    {
+        setX(x);
+        setY(y);
+        setCenterX(centerX);
+        setCenterY(centerY);
+        setFontSize(((Number)props.get("fontSize")).intValue());
+    }
 }
+
+/*
+{
+    "type":"text",
+    "properties": {
+        "content": "A7a",
+        "fontColor": "red",
+        "fontFamily": "Roboto",
+        "fontSize": 20,
+        "fontStyle": "Italic",
+        "fontWeight": "bold"
+    },
+    "x": 21,
+    "y": 45,
+    "centerX":34,
+    "centerY":76
+}
+ */

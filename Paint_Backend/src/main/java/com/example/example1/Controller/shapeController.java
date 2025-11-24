@@ -1,6 +1,8 @@
 package com.example.example1.Controller;
 
 
+import com.example.example1.DTO.moveDTO;
+import com.example.example1.DTO.resizeDTO;
 import com.example.example1.DTO.shapeDTO;
 import com.example.example1.Model.shape;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,5 +32,25 @@ public class shapeController {
     @DeleteMapping("/delete/{id}")
     public void deleteShape(@PathVariable int id) {
         shapeService.delete(id);
+    }
+
+    @GetMapping("/{id}")
+    public shape getShape(@PathVariable int id) {
+        return shapeService.getShape(id);
+    }
+
+    @PostMapping("/copy/{id}")
+    public shape copyShape(@PathVariable int id) {
+        return shapeService.copyShape(id);
+    }
+
+    @PutMapping("/move")
+    public void moveShape(@RequestBody moveDTO dto) {
+        shapeService.moveShape(dto);
+    }
+
+    @PutMapping("/resize")
+    public void resizeShape(@RequestBody resizeDTO dto) {
+        shapeService.resizeShape(dto);
     }
 }
