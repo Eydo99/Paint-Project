@@ -1,25 +1,25 @@
 <div class="toolbar">
 
   <!-- Selection -->
-  <button class="tool-btn" 
+  <button class="tool-btn"
           [class.active]="activeTool === 'select'"
           (click)="setTool('select')">
     <lucide-icon name="mouse-pointer"></lucide-icon>
   </button>
 
-  <button class="tool-btn" 
+  <button class="tool-btn"
           [class.active]="activeTool === 'move'"
           (click)="setTool('move')">
     <lucide-icon name="move"></lucide-icon>
   </button>
 
-  <button class="tool-btn" 
+  <button class="tool-btn"
           [class.active]="activeTool === 'resize'"
           (click)="setTool('resize')">
     <lucide-icon name="crop"></lucide-icon>
   </button>
 
-  <button class="tool-btn" 
+  <button class="tool-btn"
           [class.active]="activeTool === 'rotate'"
           (click)="setTool('rotate')">
     <lucide-icon name="rotate-cw"></lucide-icon>
@@ -75,7 +75,7 @@
   </button>
 
   <button class="tool-btn" [class.active]="activeTool === 'eraser'" (click)="setTool('eraser')">
-    <lucide-icon name="erase"></lucide-icon>
+    <lucide-icon name="eraser"></lucide-icon>
   </button>
 
   <div class="separator"></div>
