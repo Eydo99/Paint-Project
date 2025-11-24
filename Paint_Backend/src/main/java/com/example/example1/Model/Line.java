@@ -4,30 +4,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Line extends shape {
-    double xEnd,yEnd;
+    double xEnd,yEnd,length;
 
     @Override
     public void setProperties(Map<String,Object> props)
     {
-        this.x=((Number)props.get("x")).doubleValue();
-        this.y=((Number)props.get("y")).doubleValue();
-        this.centerX=((Number)props.get("centerX")).doubleValue();
-        this.centerY=((Number)props.get("centerY")).doubleValue();
         this.xEnd=calculateXEnd(this.x,this.centerX);
-        this.yEnd=calcualteYEnd(this.y,this.centerY);
-        this.angle=0;
+        this.yEnd=calculateYEnd(this.y,this.centerY);
+        this.length=calculateLength(this.x,this.y,this.centerX,this.centerY);
     }
 
     @Override
     public Map<String,Object> getProperties() {
         Map<String,Object> props=new HashMap<>();
-        props.put("x",this.x);
-        props.put("y",this.y);
-        props.put("centerX",this.centerX);
-        props.put("centerY",this.centerY);
         props.put("xEnd",this.xEnd);
         props.put("yEnd",this.yEnd);
-        props.put("angle",this.angle);
+        props.put("length",this.length);
         return props;
     }
 
@@ -35,10 +27,57 @@ public class Line extends shape {
     {
         return Math.abs(2*centerX-x);
     }
-    private double calcualteYEnd(double y,double centerY)
+
+    private double calculateYEnd(double y,double centerY)
     {
         return Math.abs(2*centerY-y);
     }
 
+    private double calculateLength(double x,double y,double centerX,double centerY)
+    {
+        return 2*Math.sqrt(Math.pow(x-centerX,2)+Math.pow(y-centerY,2));
+    }
+
+    public double getLength() {
+        return length;
+    }
+
+    public void setLength(double length) {
+        this.length = length;
+    }
+
+    @Override
+    public shape clone()
+    {
+        Line clone=(Line)super.clone();
+        clone.xEnd=this.xEnd;
+        clone.yEnd=this.yEnd;
+        return clone;
+    }
+
+
+    @Override
+    public void resize(double x,double y, double centerX,double centerY,Map<String,Object> props)
+    {
+        setCenterX(centerX);
+        setCenterY(centerY);
+        setX(x);
+        setY(y);
+        setLength((((Number)props.get("length")).doubleValue()));
+    }
+
 
 }
+
+/*
+{
+    "type":"line",
+    "fillColor": "green",
+    "outlineColor": "red",
+    "strokeWidth": 1,
+    "x": 21,
+    "y": 45,
+    "centerX":34,
+    "centerY":76
+}
+ */

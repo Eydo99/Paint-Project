@@ -9,29 +9,17 @@ public class Ellipse extends shape {
     @Override
     public void setProperties(Map<String, Object> props)
     {
-        this.x=((Number)props.get("x")).doubleValue();
-        this.y=((Number)props.get("y")).doubleValue();
-        this.centerX=((Number)props.get("centerX")).doubleValue();
-        this.centerY=((Number)props.get("centerY")).doubleValue();
         this.radiusX=calculateRadiusX(this.x,this.centerX);
         this.radiusY=calculateRadiusY(this.y,this.centerY);
-        this.angle=0;
-
     }
 
     @Override
     public Map<String, Object> getProperties() {
         Map<String, Object> props = new HashMap<>();
-        props.put("x",this.x);
-        props.put("y",this.y);
-        props.put("centerX",this.centerX);
-        props.put("centerY",this.centerY);
         props.put("radiusX",this.radiusX);
         props.put("radiusY",this.radiusY);
-        props.put("angle",this.angle);
         return props;
     }
-/*
     public void setRadiusX(double radiusX) {
         this.radiusX = radiusX;
     }
@@ -40,15 +28,47 @@ public class Ellipse extends shape {
         this.radiusY = radiusY;
     }
 
- */
-
     private double calculateRadiusX(double x, double CenterX)
     {
         return Math.abs(x-CenterX);
     }
+
     private double calculateRadiusY(double y,double CenterY)
     {
         return Math.abs(y-CenterY);
     }
 
+    @Override
+    public shape clone()
+    {
+        Ellipse clone=(Ellipse)super.clone();
+        clone.radiusX=this.radiusX;
+        clone.radiusY=this.radiusY;
+        return clone;
+    }
+
+    @Override
+    public void resize(double x,double y, double centerX,double centerY,Map<String,Object> props)
+    {
+        setCenterX(centerX);
+        setCenterY(centerY);
+        setX(x);
+        setY(y);
+        setRadiusX(((Number)props.get("radiusX")).doubleValue());
+        setRadiusY(((Number)props.get("radiusY")).doubleValue());
+    }
+
 }
+
+/*
+{
+    "type":"ellipse",
+    "fillColor": "green",
+    "outlineColor": "red",
+    "strokeWidth": 1,
+    "x": 21,
+    "y": 45,
+    "centerX":34,
+    "centerY":76
+}
+ */
