@@ -1,32 +1,27 @@
 package com.example.example1.shapeService;
 
-import com.example.example1.Commands.Command;
-import com.example.example1.Commands.moveCommand;
-import com.example.example1.Commands.resizeCommand;
-import com.example.example1.DTO.moveDTO;
-import com.example.example1.DTO.resizeDTO;
+import com.example.example1.Commands.*;
+import com.example.example1.DTO.updateColorDTO;
 import com.example.example1.DTO.shapeDTO;
+import com.example.example1.DTO.updateDTO;
 import com.example.example1.Model.shape;
 import com.example.example1.Factory.shapeFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 
 @Service
 public class shapeService {
 
-    List<shape> shapes=new ArrayList<>();
-    shapeFactory shapeFactory=new shapeFactory();
-    Stack<Command> undoStack=new Stack<>();
-    Stack<Command> redoStack=new Stack<>();
-    private int nextID=1;
+    List<shape> shapes = new ArrayList<>();
+    shapeFactory shapeFactory = new shapeFactory();
+    commandManager commandManager = new commandManager();
+    private int nextID = 1;
 
 
-    public shape createShape(shapeDTO DTO)
-    {
-        shape newShape =shapeFactory.createShape(DTO.getType());
+    public shape createShape(shapeDTO DTO) {
+        shape newShape = shapeFactory.createShape(DTO.getType());
         newShape.setId(String.valueOf(nextID++));
         newShape.setType(DTO.getType());
         newShape.setX(DTO.getX());
@@ -39,60 +34,51 @@ public class shapeService {
         newShape.setStrokeWidth(DTO.getStrokeWidth());
         newShape.setAngle(0);
 
-        shapes.add(newShape);
+        commandManager.execute(new addCommand(this.shapes,newShape));
+
         return newShape;
     }
+
+
+    public void delete(int id) {
+        shape shape = getShapeById(id);
+        commandManager.execute(new deleteCommand(this.shapes, shape));
+    }
+
 
     public List<shape> getShapes() {
         return shapes;
     }
 
 
-    public void delete(int id) {
-        shape shape=getShapeById(id);
-        shapes.remove(shape);
-    }
-
-
-    private shape getShapeById(int id)
-    {
-        return shapes.stream().filter(shape ->  shape.getId().equals(String.valueOf(id))).findFirst().orElseThrow(()->new RuntimeException("Shape not found"));
-    }
-
     public shape getShape(int id) {
         return getShapeById(id);
     }
 
     public shape copyShape(int id) {
-        shape originalShape=getShapeById(id);
-        shape clone=originalShape.clone();
-<<<<<<< HEAD
-        clone.setId(nextID++);
-=======
+        shape originalShape = getShapeById(id);
+        shape clone = originalShape.clone();
         clone.setId(String.valueOf(nextID++));
->>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
-        shapes.add(clone);
+        commandManager.execute(new addCommand(this.shapes,clone));
         return clone;
     }
 
-    public void moveShape(moveDTO dto) {
-        shape shape=getShapeById(dto.getId());
 
-        Command command=new moveCommand(shape, dto.getX(), dto.getY(), dto.getCenterX(), dto.getCenterY());
-        command.execute();
-        undoStack.push(command);
+    public void updateShape(updateDTO dto) {
+        shape shape = getShapeById(Integer.parseInt(dto.getId()));
+        commandManager.execute(new updateCommand(shape, dto.getX(),dto.getY(),dto.getCenterX(),dto.getCenterY(),dto.getAngle(),dto.getProperties()));
     }
 
-    public void resizeShape(resizeDTO dto) {
-        shape shape=getShapeById(dto.getId());
+    public void updateColor(updateColorDTO dto) {
+        shape shape = getShapeById(Integer.parseInt(dto.getId()));
 
-        Command command=new resizeCommand(shape, dto.getX(),dto.getY(),dto.getCenterX(),dto.getCenterY(),dto.getProperties());
-        command.execute();
-        undoStack.push(command);
+        commandManager.execute(new updateColorCommand(shape,dto.getFillColor(), dto.getOutlineColor(),dto.getStrokeWidth()));
     }
 
-<<<<<<< HEAD
+
+
+
+    private shape getShapeById(int id) {
+        return shapes.stream().filter(shape -> shape.getId().equals(String.valueOf(id))).findFirst().orElseThrow(() -> new RuntimeException("Shape not found"));
+    }
 }
-=======
-}
->>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416

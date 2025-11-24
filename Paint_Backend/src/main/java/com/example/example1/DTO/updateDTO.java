@@ -1,13 +1,33 @@
 package com.example.example1.DTO;
 
-public class moveDTO {
-    private int id;
+import java.util.Map;
+
+public class updateDTO {
+    private String id;
     private double x;
     private double y;
     private double centerX;
     private double centerY;
+    private double angle;
+    private Map<String,Object> properties;
 
-    public int getId() {
+    public double getAngle() {
+        return angle;
+    }
+
+    public void setAngle(double angle) {
+        this.angle = angle;
+    }
+
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
+    }
+
+    public String getId() {
         return id;
     }
 
@@ -19,7 +39,7 @@ public class moveDTO {
         this.centerY = centerY;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -46,8 +66,20 @@ public class moveDTO {
     public void setCenterX(double centerX) {
         this.centerX = centerX;
     }
-<<<<<<< HEAD
 }
-=======
+
+/*
+{
+    "id":"2",
+    "x": 21,
+    "y": 45,
+    "centerX":34,
+    "centerY":76,
+    "angle":55,
+    "properties":
+    {
+        "length":55,
+        "width":55
+    }
 }
->>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
+ */

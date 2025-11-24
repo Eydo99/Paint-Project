@@ -1,9 +1,9 @@
 package com.example.example1.Controller;
 
 
-import com.example.example1.DTO.moveDTO;
-import com.example.example1.DTO.resizeDTO;
 import com.example.example1.DTO.shapeDTO;
+import com.example.example1.DTO.updateColorDTO;
+import com.example.example1.DTO.updateDTO;
 import com.example.example1.Model.shape;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -14,11 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/shape")
-<<<<<<< HEAD
 @CrossOrigin(origins = "http://localhost:4200") // allow Angular frontend
-=======
-@CrossOrigin(origins = "http://localhost:4200")
->>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
 public class shapeController {
 
     @Autowired
@@ -49,17 +45,14 @@ public class shapeController {
         return shapeService.copyShape(id);
     }
 
-    @PutMapping("/move")
-    public void moveShape(@RequestBody moveDTO dto) {
-        shapeService.moveShape(dto);
+    @PutMapping("/updateShape")
+    public void updateShape(@RequestBody updateDTO dto) {
+        shapeService.updateShape(dto);
     }
 
-    @PutMapping("/resize")
-    public void resizeShape(@RequestBody resizeDTO dto) {
-        shapeService.resizeShape(dto);
+    @PutMapping("/updateColor")
+    public void updateColor(@RequestBody updateColorDTO dto) {
+        shapeService.updateColor(dto);
     }
-<<<<<<< HEAD
+
 }
-=======
-}
->>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416

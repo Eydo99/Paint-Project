@@ -1,7 +1,5 @@
 package com.example.example1.Model;
 
-import com.example.example1.DTO.moveDTO;
-
 import java.util.Map;
 
 public abstract class shape implements Cloneable {
@@ -103,26 +101,20 @@ public abstract class shape implements Cloneable {
 
     @Override
     public shape clone() {
-        try
-        {
+        try {
             return (shape) super.clone();
-        }
-        catch (CloneNotSupportedException e)
-        {
+        } catch (CloneNotSupportedException e) {
             throw new RuntimeException("clone not supported");
         }
     }
 
-    public void move(double x, double y,double centerX,double centerY) {
-        setX(x);
-        setY(y);
-        setCenterX(centerX);
-        setCenterY(centerY);
-    }
-    public abstract void resize(double x, double y,double centerX,double centerY,Map<String,Object> props);
 
-<<<<<<< HEAD
+    public abstract void update(double x, double y, double centerX, double centerY,double angle, Map<String, Object> props);
+
+    public void upadteColor(String fillColor, String outlineColor,int strokeWidth) {
+        setFillColor(fillColor);
+        setOutlineColor(outlineColor);
+        setStrokeWidth(strokeWidth);
+    }
 }
-=======
-}
->>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
+

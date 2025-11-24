@@ -1,7 +1,9 @@
 package com.example.example1.Factory;
 
 import com.example.example1.Model.*;
+import org.springframework.stereotype.Service;
 
+@Service
 public class shapeFactory {
     public shape createShape(String type) {
         return switch (type.toLowerCase()) {
@@ -11,7 +13,7 @@ public class shapeFactory {
             case "square" -> new Square();
             case "triangle" -> new Triangle();
             case "line" -> new Line();
-            case "text" -> new Text();
+           // case "text" -> new Text();
             default -> null;
         };
     }

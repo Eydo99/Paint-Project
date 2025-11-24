@@ -23,7 +23,15 @@ public class Line extends shape {
         return props;
     }
 
-    private double calculateXEnd(double x,double centerX)
+    public void setXEnd(double xEnd) {
+        this.xEnd = xEnd;
+    }
+
+    public void setYEnd(double yEnd) {
+        this.yEnd = yEnd;
+    }
+
+    private double calculateXEnd(double x, double centerX)
     {
         return Math.abs(2*centerX-x);
     }
@@ -38,13 +46,6 @@ public class Line extends shape {
         return 2*Math.sqrt(Math.pow(x-centerX,2)+Math.pow(y-centerY,2));
     }
 
-<<<<<<< HEAD
-    public double getLength() {
-        return length;
-    }
-
-=======
->>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
     public void setLength(double length) {
         this.length = length;
     }
@@ -58,15 +59,17 @@ public class Line extends shape {
         return clone;
     }
 
-
     @Override
-    public void resize(double x,double y, double centerX,double centerY,Map<String,Object> props)
+    public void update(double x, double y, double centerX, double centerY, double angle, Map<String, Object> props)
     {
         setCenterX(centerX);
         setCenterY(centerY);
         setX(x);
         setY(y);
         setLength((((Number)props.get("length")).doubleValue()));
+        setXEnd((((Number)props.get("xEnd")).doubleValue()));
+        setYEnd((((Number)props.get("yEnd")).doubleValue()));
+        setAngle(angle);
     }
 
 
@@ -85,6 +88,3 @@ public class Line extends shape {
 }
 <<<<<<< HEAD
  */
-=======
- */
->>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416

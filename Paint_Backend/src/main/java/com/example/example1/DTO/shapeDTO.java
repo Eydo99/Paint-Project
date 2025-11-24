@@ -31,13 +31,6 @@ public class shapeDTO {
         this.angle = angle;
     }
 
-<<<<<<< HEAD
-=======
-    private double centerX;
-    private double centerY;
-    private double angle;
-
->>>>>>> 7a635d5fa7e0f7a12b1651ad7ca2ff1f5c451416
     public double getX() {
         return x;
     }
