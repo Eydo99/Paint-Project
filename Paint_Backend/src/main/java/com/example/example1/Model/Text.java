@@ -3,6 +3,7 @@ package com.example.example1.Model;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
 public class Text extends shape {
     private String content,fontFamily,fontColor,fontWeight,fontStyle;
     private int fontSize;
@@ -76,4 +77,5 @@ public class Text extends shape {
     "centerX":34,
     "centerY":76
 }
+
  */

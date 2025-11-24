@@ -48,7 +48,7 @@ public class Rectangle extends shape {
     }
 
     @Override
-    public void resize(double x,double y, double centerX,double centerY,Map<String,Object> props)
+    public void update(double x, double y, double centerX, double centerY, double angle, Map<String, Object> props)
     {
         setCenterX(centerX);
         setCenterY(centerY);
@@ -56,6 +56,7 @@ public class Rectangle extends shape {
         setY(y);
         setWidth((((Number)props.get("width")).doubleValue()));
         setLength((((Number)props.get("length")).doubleValue()));
+        setAngle(angle);
     }
 }
 
