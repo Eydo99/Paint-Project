@@ -1,1 +1,98 @@
-<p>properties-bar works!</p>
+<div class="properties-panel">
+
+  <div class="section">
+    <div class="section-title">Properties</div>
+  </div>
+
+  <!-- Fill Color -->
+  <div class="section">
+    <label class="label">Fill Color</label>
+    <div class="color-input">
+      <div class="color-box"
+           [style.background]="fillColor"
+           (click)="openFillColorPicker()"></div>
+      <input type="text"
+             [(ngModel)]="fillColor"
+             (ngModelChange)="updateFill()" />
+
+      <!-- ✨ Hidden Color Picker -->
+      <input type="color"
+             #fillColorPicker
+             [value]="fillColor"
+             (input)="onFillColorChange($event)"
+             style="display: none;" />
+    </div>
+  </div>
+
+  <!-- Border Color -->
+  <div class="section">
+    <label class="label">Border Color</label>
+    <div class="color-input">
+      <div class="color-box"
+           [style.background]="strokeColor"
+           (click)="openStrokeColorPicker()"></div>
+      <input type="text"
+             [(ngModel)]="strokeColor"
+             (ngModelChange)="updateStroke()" />
+
+      <!-- ✨ Hidden Color Picker -->
+      <input type="color"
+             #strokeColorPicker
+             [value]="strokeColor"
+             (input)="onStrokeColorChange($event)"
+             style="display: none;" />
+    </div>
+  </div>
+
+
+<!--  //////////////////////////////////////////////////////////////////////-->
+
+
+
+  <!-- Stroke Width -->
+  <div class="section">
+    <label class="label">Stroke Width</label>
+    <input type="range" min="1" max="20"
+           [(ngModel)]="strokeWidth"
+           (ngModelChange)="updateStroke()" />
+  </div>
+
+  <!-- Size -->
+  <div class="section">
+    <label class="label">Size</label>
+
+    <label class="label">Width</label>
+    <input type="number"
+           [(ngModel)]="width"
+           (ngModelChange)="updateSize()" />
+
+    <label class="label">Height</label>
+    <input type="number"
+           [(ngModel)]="height"
+           (ngModelChange)="updateSize()" />
+  </div>
+
+  <!-- Position -->
+  <div class="section">
+    <label class="label">Position</label>
+
+    <label class="label">X</label>
+    <input type="number"
+           [(ngModel)]="posX"
+           (ngModelChange)="updatePosition()" />
+
+    <label class="label">Y</label>
+    <input type="number"
+           [(ngModel)]="posY"
+           (ngModelChange)="updatePosition()" />
+  </div>
+
+  <!-- Shape Type -->
+  <div class="section">
+    <label class="label">Shape Type</label>
+    <div class="shape-type">
+      {{ shapeType || 'None' }}
+    </div>
+  </div>
+
+</div>

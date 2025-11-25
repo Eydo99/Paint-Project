@@ -1,1 +1,22 @@
-<p>status-bar works!</p>
+<div class="status-bar">
+
+  <div class="status-item">
+    <span class="status-label">Tool:</span>
+    <span class="status-value">{{ currentTool }}</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="status-item">
+    <span class="status-label">Mouse:</span>
+    <span class="status-value">{{ mouseX }}, {{ mouseY }}</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="status-item">
+    <span class="status-label">Selected:</span>
+    <span class="status-value">{{ selectedShapeName }}</span>
+  </div>
+
+</div>

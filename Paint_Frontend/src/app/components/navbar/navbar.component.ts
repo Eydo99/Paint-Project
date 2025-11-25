@@ -5,7 +5,7 @@ import { CanvasService } from '../../service/canvas.service';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule], //  ngIf و ngFor
+  imports: [CommonModule],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css']
 })
@@ -13,37 +13,69 @@ export class NavbarComponent {
 
   openMenu: string | null = null;
 
-  colors: string[] = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FFA500', '#800080'];
+  // ✨ NEW: Track current default colors
+  currentFillColor: string = '#ffffff';
+  currentStrokeColor: string = '#090101';
+
+  // ✨ NEW: Color mode selection
+  colorMode: 'fill' | 'stroke' = 'fill';
+
+  // ✨ EXPANDED: More colors
+  colors: string[] = [
+    // Basic colors
+    '#000000', '#FFFFFF', '#808080', '#C0C0C0',
+    // Red shades
+    '#FF0000', '#FF6B6B', '#DC143C', '#8B0000',
+    // Orange & Yellow
+    '#FFA500', '#FFD700', '#FFFF00', '#F0E68C',
+    // Green shades
+    '#00FF00', '#32CD32', '#228B22', '#006400',
+    // Blue shades
+    '#0000FF', '#1E90FF', '#4169E1', '#000080',
+    // Purple & Pink
+    '#800080', '#9370DB', '#FF00FF', '#FF69B4',
+    // Brown & Beige
+    '#8B4513', '#A0522D', '#D2691E', '#F5DEB3',
+    // Cyan & Teal
+    '#00FFFF', '#20B2AA', '#008B8B', '#008080'
+  ];
 
   constructor(private canvasService: CanvasService) {}
-
 
   toggleMenu(menuName: string) {
     this.openMenu = this.openMenu === menuName ? null : menuName;
   }
 
-  // 1. هنا (Copy, Delete, Clear, Undo, Redo)
-  performAction(action: string) {
-    this.canvasService.triggerAction(action);
-    this.openMenu = null; // نقفل القايمة
+  // ✨ NEW: Toggle between fill and stroke mode
+  setColorMode(mode: 'fill' | 'stroke') {
+    this.colorMode = mode;
   }
 
-  // 2. Color Logic
-  selectColor(color: string) {
-    this.canvasService.changeColor(color);
+  performAction(action: string) {
+    this.canvasService.triggerAction(action);
     this.openMenu = null;
   }
 
-  // 3. Save Logic
+  // ✨ UPDATED: Select color based on mode and track it
+  selectColor(color: string) {
+    if (this.colorMode === 'fill') {
+      this.currentFillColor = color;  // ✨ Track current fill
+      this.canvasService.setDefaultFillColor(color);
+    } else {
+      this.currentStrokeColor = color;  // ✨ Track current stroke
+      this.canvasService.setDefaultStrokeColor(color);
+    }
+    // Also change selected shapes if any
+    this.openMenu = null;
+  }
+
   saveFile(format: 'json' | 'xml') {
-    // هنا ممكن تفتح Popup تطلب اسم الملف، بس هبعت اسم افتراضي دلوقتي
     this.canvasService.saveFile(format, 'my-paint-project');
     this.openMenu = null;
   }
 
-  // 4. Load Logic
   onFileSelected(event: any) {
-    const file = event.target.files[0];// اول اختيار
+    const file = event.target.files[0];
     if (file) {
       this.canvasService.loadFile(file);
     }

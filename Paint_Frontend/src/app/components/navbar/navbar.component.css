@@ -162,3 +162,71 @@
   color: red !important;
   border-top: 1px solid #eee;
 }
+/* ✨ NEW: Color mode selector styles */
+.color-mode-selector {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+
+.color-mode-selector button {
+  flex: 1;
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.color-mode-selector button:hover {
+  background: #f3f4f6;
+}
+
+.color-mode-selector button.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+/* ✨ UPDATED: Better colors panel */
+.colors-panel {
+  min-width: 280px;
+}
+
+.colors-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  padding: 8px;
+}
+
+.color-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid #e5e7eb;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.color-box:hover {
+  transform: scale(1.1);
+  border-color: #3b82f6;
+}
+
+/* ✨ NEW: Frame for selected fill color */
+.color-box.selected-fill {
+  border: 3px solid #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+/* ✨ NEW: Frame for selected stroke color */
+.color-box.selected-stroke {
+  border: 3px solid #ef4444;
+  box-shadow: 0 0 0 1px #ef4444;
+}

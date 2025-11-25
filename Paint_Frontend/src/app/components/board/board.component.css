@@ -45,7 +45,7 @@ canvas {
 /* Controls */
 .controls-bar {
   position: absolute;
-  bottom: 12px;
+  bottom: 35px;
   left: 12px;
   display: flex;
   gap: 8px;
