@@ -40,7 +40,7 @@
     <lucide-icon name="circle"></lucide-icon>
   </button>
 
-  <button class="tool-btn" title="Ellipse">
+  <button class="tool-btn" [class.active]="activeTool === 'ellipse'" (click)="setTool('ellipse')" title="ellipse">
   <img src="assets\icons\oval.svg" class="tool-icon">
 </button>
 
