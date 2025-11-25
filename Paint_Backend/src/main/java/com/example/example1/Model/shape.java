@@ -1,7 +1,19 @@
 package com.example.example1.Model;
 
 import java.util.Map;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSeeAlso;
 
+@XmlRootElement(name = "shape")
+@XmlSeeAlso({
+    Circle.class,
+    Rectangle.class,
+    Square.class,
+    Triangle.class,
+    Ellipse.class,
+    Line.class
+})
 public abstract class shape implements Cloneable {
     protected String type;
     protected String id;
@@ -13,7 +25,7 @@ public abstract class shape implements Cloneable {
     protected String outlineColor;
     protected int strokeWidth;
     protected double angle;
-
+    @XmlElement
     public double getAngle() {
         return angle;
     }
@@ -21,7 +33,7 @@ public abstract class shape implements Cloneable {
     public void setAngle(double angle) {
         this.angle = angle;
     }
-
+    @XmlElement
     public double getX() {
         return x;
     }
@@ -29,6 +41,7 @@ public abstract class shape implements Cloneable {
     public void setX(double x) {
         this.x = x;
     }
+    @XmlElement
 
     public double getY() {
         return y;
@@ -37,14 +50,16 @@ public abstract class shape implements Cloneable {
     public void setY(double y) {
         this.y = y;
     }
+    @XmlElement
 
     public double getCenterY() {
         return centerY;
     }
-
+    
     public void setCenterY(double centerY) {
         this.centerY = centerY;
     }
+    @XmlElement
 
     public double getCenterX() {
         return centerX;
@@ -54,7 +69,7 @@ public abstract class shape implements Cloneable {
         this.centerX = centerX;
     }
 
-
+    @XmlElement
     public String getType() {
         return type;
     }
@@ -74,7 +89,7 @@ public abstract class shape implements Cloneable {
     public abstract void setProperties(Map<String, Object> props);
 
     public abstract Map<String, Object> getProperties();
-
+    @XmlElement
     public String getFillColor() {
         return fillColor;
     }
@@ -82,7 +97,7 @@ public abstract class shape implements Cloneable {
     public void setFillColor(String fillColor) {
         this.fillColor = fillColor;
     }
-
+    @XmlElement
     public String getOutlineColor() {
         return outlineColor;
     }
@@ -90,6 +105,7 @@ public abstract class shape implements Cloneable {
     public void setOutlineColor(String outlineColor) {
         this.outlineColor = outlineColor;
     }
+    @XmlElement
 
     public int getStrokeWidth() {
         return strokeWidth;
