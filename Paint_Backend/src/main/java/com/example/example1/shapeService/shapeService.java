@@ -1,7 +1,6 @@
 package com.example.example1.shapeService;
 
 import com.example.example1.Commands.*;
-import com.example.example1.DTO.updateColorDTO;
 import com.example.example1.DTO.shapeDTO;
 import com.example.example1.DTO.updateDTO;
 import com.example.example1.Model.shape;
@@ -21,6 +20,7 @@ public class shapeService {
     shapeFactory shapeFactory = new shapeFactory();
     commandManager commandManager = new commandManager();
     private int nextID = 1;
+
     @Autowired
     private XMLService xmlService;
     private JSONService jsonService;
@@ -74,15 +74,9 @@ public class shapeService {
     public void updateShape(updateDTO dto) {
         shape shape = getShapeById(Integer.parseInt(dto.getId()));
         commandManager.execute(new updateCommand(shape, dto.getX(), dto.getY(), dto.getCenterX(), dto.getCenterY(),
-                dto.getAngle(), dto.getProperties()));
+                dto.getAngle(), dto.getProperties(), dto.getFillColor(), dto.getOutlineColor(), dto.getStrokeWidth()));
     }
 
-    public void updateColor(updateColorDTO dto) {
-        shape shape = getShapeById(Integer.parseInt(dto.getId()));
-
-        commandManager.execute(
-                new updateColorCommand(shape, dto.getFillColor(), dto.getOutlineColor(), dto.getStrokeWidth()));
-    }
 
     public shape undo() {
         return commandManager.undo();

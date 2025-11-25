@@ -34,14 +34,9 @@ public class Circle extends shape {
     }
 
     @Override
-    public void update(double x, double y, double centerX, double centerY, double angle, Map<String, Object> props)
+    public void updateProperties( Map<String, Object> props)
     {
-        setCenterX(centerX);
-        setCenterY(centerY);
-        setX(x);
-        setY(y);
         setRadius(((Number)props.get("radius")).doubleValue());
-        setAngle(angle);
     }
 }
 

@@ -48,15 +48,10 @@ public class Ellipse extends shape {
     }
 
     @Override
-    public void update(double x, double y, double centerX, double centerY, double angle, Map<String, Object> props)
+    public void updateProperties( Map<String, Object> props)
     {
-        setCenterX(centerX);
-        setCenterY(centerY);
-        setX(x);
-        setY(y);
         setRadiusX(((Number)props.get("radiusX")).doubleValue());
         setRadiusY(((Number)props.get("radiusY")).doubleValue());
-        setAngle(angle);
     }
 
 }
