@@ -1,17 +1,16 @@
-<!-- board.component.html -->
-
 <div class="board-wrapper">
-  <div id="board-container" class="board-container"></div>
-</div>
+  <div class="board-container">
+    <canvas #canvas></canvas>
 
-<div class="controls-bar">
-  <button (click)="toggleGrid()">
-    {{ gridless ? "Show Grid" : "Hide Grid" }}
-  </button>
+    <!-- Controls inside board -->
+    <div class="controls-bar">
+      <button (click)="toggleGrid()">
+        {{ gridless ? 'Show Grid' : 'Hide Grid' }}
+      </button>
 
-  <select (change)="onZoomSelect($event)">
-    <option *ngFor="let z of zoomLevels" [value]="z.value">
-      {{ z.label }}
-    </option>
-  </select>
+      <select (change)="onZoomSelect($event)">
+        <option *ngFor="let z of zoomLevels" [value]="z.value">{{ z.label }}</option>
+      </select>
+    </div>
+  </div>
 </div>
