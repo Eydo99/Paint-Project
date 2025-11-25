@@ -1,6 +1,7 @@
 package com.example.example1.Controller;
 
 
+import com.example.example1.DTO.fileDTO;
 import com.example.example1.DTO.shapeDTO;
 import com.example.example1.DTO.updateDTO;
 import com.example.example1.Exceptions.IllegalShapeTypeException;
@@ -26,7 +27,7 @@ public class shapeController {
     public shape addShape(@RequestBody shapeDTO dto) throws IllegalShapeTypeException {
         return shapeService.createShape(dto);
     }
-
+    
     @GetMapping
     public List<shape> getShapes() {
         return shapeService.getShapes();
@@ -68,4 +69,12 @@ public class shapeController {
        return  shapeService.redo();
     }
 
+    @PostMapping("/save/xml")
+    public void savefilexml(@RequestBody fileDTO dto) throws Exception  {
+        shapeService.saveToXML(dto.getFullPath()+".xml") ;
+    }
+    @PostMapping("/save/json")
+    public void savefilejson(@RequestBody fileDTO dto) throws Exception  {
+        shapeService.saveToJSON(dto.getFullPath()+".json") ;
+    }
 }
