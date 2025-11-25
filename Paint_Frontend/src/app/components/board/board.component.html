@@ -1,9 +1,11 @@
 <!-- board.component.html -->
-
 <div class="board-wrapper">
-  <div id="board-container" class="board-container"></div>
+  <div class="board-container">
+    <canvas #canvas></canvas>
+  </div>
 </div>
 
+<!-- Controls (always on top-left of the viewport) -->
 <div class="controls-bar">
   <button (click)="toggleGrid()">
     {{ gridless ? "Show Grid" : "Hide Grid" }}
@@ -15,4 +17,3 @@
     </option>
   </select>
 </div>
-
