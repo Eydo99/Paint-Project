@@ -2,7 +2,6 @@ package com.example.example1.Controller;
 
 
 import com.example.example1.DTO.shapeDTO;
-import com.example.example1.DTO.updateColorDTO;
 import com.example.example1.DTO.updateDTO;
 import com.example.example1.Model.shape;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,10 +54,13 @@ public class shapeController {
         shapeService.updateShape(dto);
     }
 
+    /*
     @PutMapping("/updateColor")
     public void updateColor(@RequestBody updateColorDTO dto) {
         shapeService.updateColor(dto);
     }
+
+     */
 
     @PostMapping("/undo")
     public shape undo() {

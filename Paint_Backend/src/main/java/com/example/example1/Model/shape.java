@@ -1,5 +1,6 @@
 package com.example.example1.Model;
 
+import java.awt.*;
 import java.util.Map;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -25,6 +26,8 @@ public abstract class shape implements Cloneable {
     protected String outlineColor;
     protected int strokeWidth;
     protected double angle;
+
+
     @XmlElement
     public double getAngle() {
         return angle;
@@ -59,8 +62,8 @@ public abstract class shape implements Cloneable {
     public void setCenterY(double centerY) {
         this.centerY = centerY;
     }
-    @XmlElement
 
+    @XmlElement
     public double getCenterX() {
         return centerX;
     }
@@ -125,11 +128,20 @@ public abstract class shape implements Cloneable {
     }
 
 
-    public abstract void update(double x, double y, double centerX, double centerY,double angle, Map<String, Object> props);
+    public  void updateShape(double x, double y, double centerX, double centerY,double angle)
+    {
+        setX(x);
+        setY(y);
+        setCenterX(centerX);
+        setCenterY(centerY);
+        setAngle(angle);
+    };
 
-    public void upadteColor(String fillColor, String outlineColor,int strokeWidth) {
+    public void updateColor(String fillColor, String outlineColor,int strokeWidth) {
         setFillColor(fillColor);
         setOutlineColor(outlineColor);
         setStrokeWidth(strokeWidth);
     }
+
+    public abstract void updateProperties(Map<String, Object> props);
 }
