@@ -3,6 +3,9 @@ package com.example.example1.Controller;
 
 import com.example.example1.DTO.shapeDTO;
 import com.example.example1.DTO.updateDTO;
+import com.example.example1.Exceptions.IllegalShapeTypeException;
+import com.example.example1.Exceptions.ShapeNotFoundException;
+import com.example.example1.Exceptions.UndoRedoException;
 import com.example.example1.Model.shape;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +23,7 @@ public class shapeController {
     private shapeService shapeService;
 
     @PostMapping
-    public shape addShape(@RequestBody shapeDTO dto) {
+    public shape addShape(@RequestBody shapeDTO dto) throws IllegalShapeTypeException {
         return shapeService.createShape(dto);
     }
 
@@ -30,7 +33,7 @@ public class shapeController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public void deleteShape(@PathVariable int id) {
+    public void deleteShape(@PathVariable int id) throws ShapeNotFoundException {
         shapeService.deleteShape(id);
     }
 
@@ -40,35 +43,28 @@ public class shapeController {
     }
 
     @GetMapping("/{id}")
-    public shape getShape(@PathVariable int id) {
+    public shape getShape(@PathVariable int id) throws ShapeNotFoundException {
         return shapeService.getShape(id);
     }
 
     @PostMapping("/copy/{id}")
-    public shape copyShape(@PathVariable int id) {
+    public shape copyShape(@PathVariable int id) throws ShapeNotFoundException {
         return shapeService.copyShape(id);
     }
 
     @PutMapping("/updateShape")
-    public void updateShape(@RequestBody updateDTO dto) {
+    public void updateShape(@RequestBody updateDTO dto) throws ShapeNotFoundException {
         shapeService.updateShape(dto);
     }
 
-    /*
-    @PutMapping("/updateColor")
-    public void updateColor(@RequestBody updateColorDTO dto) {
-        shapeService.updateColor(dto);
-    }
-
-     */
 
     @PostMapping("/undo")
-    public shape undo() {
+    public shape undo() throws UndoRedoException {
        return  shapeService.undo();
     }
 
     @PostMapping("/redo")
-    public shape redo() {
+    public shape redo() throws UndoRedoException {
        return  shapeService.redo();
     }
 

@@ -3,6 +3,9 @@ package com.example.example1.shapeService;
 import com.example.example1.Commands.*;
 import com.example.example1.DTO.shapeDTO;
 import com.example.example1.DTO.updateDTO;
+import com.example.example1.Exceptions.IllegalShapeTypeException;
+import com.example.example1.Exceptions.ShapeNotFoundException;
+import com.example.example1.Exceptions.UndoRedoException;
 import com.example.example1.Model.shape;
 import com.example.example1.Factory.shapeFactory;
 
@@ -25,7 +28,7 @@ public class shapeService {
     private XMLService xmlService;
     private JSONService jsonService;
 
-    public shape createShape(shapeDTO DTO) {
+    public shape createShape(shapeDTO DTO) throws IllegalShapeTypeException {
         shape newShape = shapeFactory.createShape(DTO.getType());
         newShape.setId(String.valueOf(nextID++));
         newShape.setType(DTO.getType());
@@ -44,7 +47,7 @@ public class shapeService {
         return newShape;
     }
 
-    public void deleteShape(int id) {
+    public void deleteShape(int id) throws ShapeNotFoundException {
         shape shape = getShapeById(id);
         commandManager.execute(new deleteCommand(this.shapes, shape));
     }
@@ -59,11 +62,11 @@ public class shapeService {
         return shapes;
     }
 
-    public shape getShape(int id) {
+    public shape getShape(int id) throws ShapeNotFoundException {
         return getShapeById(id);
     }
 
-    public shape copyShape(int id) {
+    public shape copyShape(int id) throws ShapeNotFoundException {
         shape originalShape = getShapeById(id);
         shape clone = originalShape.clone();
         clone.setId(String.valueOf(nextID++));
@@ -71,24 +74,24 @@ public class shapeService {
         return clone;
     }
 
-    public void updateShape(updateDTO dto) {
+    public void updateShape(updateDTO dto) throws ShapeNotFoundException {
         shape shape = getShapeById(Integer.parseInt(dto.getId()));
         commandManager.execute(new updateCommand(shape, dto.getX(), dto.getY(), dto.getCenterX(), dto.getCenterY(),
                 dto.getAngle(), dto.getProperties(), dto.getFillColor(), dto.getOutlineColor(), dto.getStrokeWidth()));
     }
 
 
-    public shape undo() {
+    public shape undo() throws UndoRedoException {
         return commandManager.undo();
     }
 
-    public shape redo() {
+    public shape redo() throws UndoRedoException {
         return commandManager.redo();
     }
 
-    private shape getShapeById(int id) {
+    private shape getShapeById(int id) throws ShapeNotFoundException {
         return shapes.stream().filter(shape -> shape.getId().equals(String.valueOf(id))).findFirst()
-                .orElseThrow(() -> new RuntimeException("Shape not found"));
+                .orElseThrow(() -> new ShapeNotFoundException(id));
     }
 
 

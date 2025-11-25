@@ -1,0 +1,29 @@
+[ {
+  "type" : "circle",
+  "id" : "1",
+  "x" : 10.0,
+  "y" : 20.0,
+  "centerX" : 10.0,
+  "centerY" : 15.0,
+  "fillColor" : "red",
+  "outlineColor" : "black",
+  "strokeWidth" : 2,
+  "angle" : 0.0,
+  "properties" : {
+    "radius" : 5.0
+  }
+}, {
+  "type" : "circle",
+  "id" : "2",
+  "x" : 15.0,
+  "y" : 25.0,
+  "centerX" : 10.0,
+  "centerY" : 15.0,
+  "fillColor" : "red",
+  "outlineColor" : "black",
+  "strokeWidth" : 2,
+  "angle" : 0.0,
+  "properties" : {
+    "radius" : 10.0
+  }
+} ]
