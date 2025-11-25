@@ -1,5 +1,6 @@
 package com.example.example1.Commands;
 
+import com.example.example1.Exceptions.UndoRedoException;
 import com.example.example1.Model.shape;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +16,10 @@ public class commandManager {
         command.execute();
         undoStack.push(command);
     }
-    public shape undo() {
+    public shape undo() throws UndoRedoException {
 
         if(undoStack.isEmpty()) {
-            throw new IllegalStateException("undoStack is empty");
+            throw new UndoRedoException("Nothing to undo");
         }
 
         Command command = undoStack.pop();
@@ -27,9 +28,9 @@ public class commandManager {
         return command.getShape();
     }
 
-    public shape redo() {
+    public shape redo() throws UndoRedoException {
         if(redoStack.isEmpty()) {
-            throw new IllegalStateException("redoStack is empty");
+           throw new UndoRedoException("Nothing to redo");
         }
         Command command = redoStack.pop();
         command.execute();

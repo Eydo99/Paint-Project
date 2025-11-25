@@ -1,8 +1,12 @@
 package com.example.example1.Model;
 
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import java.util.HashMap;
 import java.util.Map;
 
+@XmlRootElement
+@XmlType(name = "Circle")
 public class Circle extends shape {
     private double radius;
 

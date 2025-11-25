@@ -12,12 +12,6 @@ public class shapeDTO {
     private Map<String,Object> properties;
     private double x;
     private double y;
-    private String content;
-    private String fontFamily;
-    private String fontColor;
-    private String fontWeight;
-    private String fontStyle;
-    private int fontSize;
     private double centerX;
     private double centerY;
     private double angle;
@@ -67,6 +61,7 @@ public class shapeDTO {
     }
 
     public void setType(String type) {this.type = type;}
+
     public String getId() {
         return id;
     }

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<shapes>
+    <shape xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Circle">
+        <angle>0.0</angle>
+        <centerX>10.0</centerX>
+        <centerY>15.0</centerY>
+        <fillColor>red</fillColor>
+        <id>1</id>
+        <outlineColor>black</outlineColor>
+        <properties>
+            <entry>
+                <key>radius</key>
+                <value xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:double">5.0</value>
+            </entry>
+        </properties>
+        <strokeWidth>2</strokeWidth>
+        <type>circle</type>
+        <x>10.0</x>
+        <y>20.0</y>
+    </shape>
+    <shape xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Circle">
+        <angle>0.0</angle>
+        <centerX>10.0</centerX>
+        <centerY>15.0</centerY>
+        <fillColor>red</fillColor>
+        <id>2</id>
+        <outlineColor>black</outlineColor>
+        <properties>
+            <entry>
+                <key>radius</key>
+                <value xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:double">10.0</value>
+            </entry>
+        </properties>
+        <strokeWidth>2</strokeWidth>
+        <type>circle</type>
+        <x>15.0</x>
+        <y>25.0</y>
+    </shape>
+</shapes>

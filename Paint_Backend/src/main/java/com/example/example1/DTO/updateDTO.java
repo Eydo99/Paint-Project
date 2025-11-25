@@ -109,4 +109,22 @@ public class updateDTO {
         "width":55
     }
 }
+
+
+{
+    "id":"1",
+    "x": 55,
+    "y": 55,
+    "centerX":55,
+    "centerY":55,
+    "angle":55,
+    "properties":
+    {
+        "fontFamily":"Arial",
+        "fontSize":55,
+        "fontStyle":"normal",
+        "content":"doubleA7a"
+    },
+    "fillColor": "green"
+}
  */

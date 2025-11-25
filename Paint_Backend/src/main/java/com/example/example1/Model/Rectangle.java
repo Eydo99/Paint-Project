@@ -12,7 +12,6 @@ public class Rectangle extends shape {
     public void setProperties(Map<String,Object> props) {
         this.length = calculateLength(this.x,this.centerX);
         this.width = calculateWidth(this.y,this.centerY);
-        this.angle=0;
     }
     @Override
     public Map<String, Object> getProperties() {
