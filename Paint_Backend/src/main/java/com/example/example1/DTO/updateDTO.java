@@ -9,6 +9,9 @@ public class updateDTO {
     private double centerX;
     private double centerY;
     private double angle;
+    private String fillColor;
+    private String outlineColor;
+    private int strokeWidth;
     private Map<String,Object> properties;
 
     public double getAngle() {
@@ -65,6 +68,30 @@ public class updateDTO {
 
     public void setCenterX(double centerX) {
         this.centerX = centerX;
+    }
+
+    public String getFillColor() {
+        return fillColor;
+    }
+
+    public void setFillColor(String fillColor) {
+        this.fillColor = fillColor;
+    }
+
+    public String getOutlineColor() {
+        return outlineColor;
+    }
+
+    public void setOutlineColor(String outlineColor) {
+        this.outlineColor = outlineColor;
+    }
+
+    public int getStrokeWidth() {
+        return strokeWidth;
+    }
+
+    public void setStrokeWidth(int strokeWidth) {
+        this.strokeWidth = strokeWidth;
     }
 }
 

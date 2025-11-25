@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { Component } from '@angular/core';
+=======
+import { Component, ViewChild, ElementRef } from '@angular/core';
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CanvasService } from '../../service/canvas.service';
@@ -12,6 +16,13 @@ import { CanvasService } from '../../service/canvas.service';
 })
 export class PropertiesBarComponent {
 
+<<<<<<< HEAD
+=======
+  // ✨ ViewChild للوصول للـ Color Pickers المخفية
+  @ViewChild('fillColorPicker') fillColorPicker!: ElementRef<HTMLInputElement>;
+  @ViewChild('strokeColorPicker') strokeColorPicker!: ElementRef<HTMLInputElement>;
+
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
   fillColor = '#93c5fd';
   strokeColor = '#3b82f6';
   strokeWidth = 2;
@@ -25,8 +36,11 @@ export class PropertiesBarComponent {
   currentShapeId: string | null = null;
 
   constructor(private canvasService: CanvasService) {
+<<<<<<< HEAD
 
     // 🔵 Listen for shape selection
+=======
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
     this.canvasService.selectedShape$.subscribe(shape => {
       if (!shape) return;
 
@@ -45,6 +59,33 @@ export class PropertiesBarComponent {
     });
   }
 
+<<<<<<< HEAD
+=======
+  // ✨ فتح Fill Color Picker
+  openFillColorPicker() {
+    this.fillColorPicker.nativeElement.click();
+  }
+
+  // ✨ فتح Stroke Color Picker
+  openStrokeColorPicker() {
+    this.strokeColorPicker.nativeElement.click();
+  }
+
+  // ✨ تغيير Fill Color من Picker
+  onFillColorChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.fillColor = input.value;
+    this.updateFill();
+  }
+
+  // ✨ تغيير Stroke Color من Picker
+  onStrokeColorChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.strokeColor = input.value;
+    this.updateStroke();
+  }
+
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
   updateFill() {
     if (this.currentShapeId) {
       this.canvasService.updateFillColor(this.currentShapeId, this.fillColor);

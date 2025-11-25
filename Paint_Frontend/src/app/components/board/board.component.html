@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <div class="board-wrapper">
   <div class="board-container">
     <canvas #canvas></canvas>
@@ -14,3 +15,24 @@
     </div>
   </div>
 </div>
+=======
+<!-- board.component.html -->
+<div class="board-wrapper">
+  <div class="board-container">
+    <canvas #canvas></canvas>
+  </div>
+</div>
+
+<!-- Controls (always on top-left of the viewport) -->
+<div class="controls-bar">
+  <button (click)="toggleGrid()">
+    {{ gridless ? "Show Grid" : "Hide Grid" }}
+  </button>
+
+  <select (change)="onZoomSelect($event)">
+    <option *ngFor="let z of zoomLevels" [value]="z.value">
+      {{ z.label }}
+    </option>
+  </select>
+</div>
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370

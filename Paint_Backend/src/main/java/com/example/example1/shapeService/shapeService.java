@@ -1,13 +1,15 @@
 package com.example.example1.shapeService;
 
 import com.example.example1.Commands.*;
-import com.example.example1.DTO.updateColorDTO;
 import com.example.example1.DTO.shapeDTO;
 import com.example.example1.DTO.updateDTO;
 import com.example.example1.Model.shape;
 import com.example.example1.Factory.shapeFactory;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +21,9 @@ public class shapeService {
     commandManager commandManager = new commandManager();
     private int nextID = 1;
 
+    @Autowired
+    private XMLService xmlService;
+    private JSONService jsonService;
 
     public shape createShape(shapeDTO DTO) {
         shape newShape = shapeFactory.createShape(DTO.getType());
@@ -34,29 +39,25 @@ public class shapeService {
         newShape.setStrokeWidth(DTO.getStrokeWidth());
         newShape.setAngle(0);
 
-        commandManager.execute(new addCommand(this.shapes,newShape));
+        commandManager.execute(new addCommand(this.shapes, newShape));
 
         return newShape;
     }
-
 
     public void deleteShape(int id) {
         shape shape = getShapeById(id);
         commandManager.execute(new deleteCommand(this.shapes, shape));
     }
 
-    public void deleteAll()
-    {
+    public void deleteAll() {
         commandManager.clear();
         shapes.clear();
         nextID = 1;
     }
 
-
     public List<shape> getShapes() {
         return shapes;
     }
-
 
     public shape getShape(int id) {
         return getShapeById(id);
@@ -66,33 +67,37 @@ public class shapeService {
         shape originalShape = getShapeById(id);
         shape clone = originalShape.clone();
         clone.setId(String.valueOf(nextID++));
-        commandManager.execute(new addCommand(this.shapes,clone));
+        commandManager.execute(new addCommand(this.shapes, clone));
         return clone;
     }
 
-
     public void updateShape(updateDTO dto) {
         shape shape = getShapeById(Integer.parseInt(dto.getId()));
-        commandManager.execute(new updateCommand(shape, dto.getX(),dto.getY(),dto.getCenterX(),dto.getCenterY(),dto.getAngle(),dto.getProperties()));
+        commandManager.execute(new updateCommand(shape, dto.getX(), dto.getY(), dto.getCenterX(), dto.getCenterY(),
+                dto.getAngle(), dto.getProperties(), dto.getFillColor(), dto.getOutlineColor(), dto.getStrokeWidth()));
     }
 
-    public void updateColor(updateColorDTO dto) {
-        shape shape = getShapeById(Integer.parseInt(dto.getId()));
 
-        commandManager.execute(new updateColorCommand(shape,dto.getFillColor(), dto.getOutlineColor(),dto.getStrokeWidth()));
+    public shape undo() {
+        return commandManager.undo();
     }
 
-    public shape undo()
-    {
-       return commandManager.undo();
+    public shape redo() {
+        return commandManager.redo();
     }
-    public shape redo()
-    {
-       return commandManager.redo();
-    }
-
 
     private shape getShapeById(int id) {
-        return shapes.stream().filter(shape -> shape.getId().equals(String.valueOf(id))).findFirst().orElseThrow(() -> new RuntimeException("Shape not found"));
+        return shapes.stream().filter(shape -> shape.getId().equals(String.valueOf(id))).findFirst()
+                .orElseThrow(() -> new RuntimeException("Shape not found"));
     }
+
+
+    public void saveToXML(String filePath) throws Exception {
+        xmlService.saveShapesToXML(shapes, filePath);
+    }
+
+    public void saveToJSON(String filePath) throws IOException {
+        jsonService.saveShapesToJSON(shapes, filePath);
+    }
+
 }

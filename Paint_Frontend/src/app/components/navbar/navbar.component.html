@@ -15,11 +15,30 @@
 
       <li class="dropdown">
         <span (click)="toggleMenu('colors')">Colors <i class="ri-arrow-down-s-line"></i></span>
-        <div class="dropdown-content colors-grid" *ngIf="openMenu === 'colors'">
-          <div *ngFor="let color of colors"
-               [style.background]="color"
-               class="color-box"
-               (click)="selectColor(color)">
+        <div class="dropdown-content colors-panel" *ngIf="openMenu === 'colors'">
+          <!-- ✨ NEW: Mode selector -->
+          <div class="color-mode-selector">
+            <button
+              [class.active]="colorMode === 'fill'"
+              (click)="setColorMode('fill')">
+              Fill
+            </button>
+            <button
+              [class.active]="colorMode === 'stroke'"
+              (click)="setColorMode('stroke')">
+              Stroke
+            </button>
+          </div>
+
+          <!-- Color grid -->
+          <div class="colors-grid">
+            <div *ngFor="let color of colors"
+                 [style.background]="color"
+                 class="color-box"
+                 [class.selected-fill]="colorMode === 'fill' && color === currentFillColor"
+                 [class.selected-stroke]="colorMode === 'stroke' && color === currentStrokeColor"
+                 (click)="selectColor(color)">
+            </div>
           </div>
         </div>
       </li>

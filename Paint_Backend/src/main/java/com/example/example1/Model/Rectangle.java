@@ -48,15 +48,10 @@ public class Rectangle extends shape {
     }
 
     @Override
-    public void update(double x, double y, double centerX, double centerY, double angle, Map<String, Object> props)
+    public void updateProperties( Map<String, Object> props)
     {
-        setCenterX(centerX);
-        setCenterY(centerY);
-        setX(x);
-        setY(y);
-        setWidth((((Number)props.get("width")).doubleValue()));
-        setLength((((Number)props.get("length")).doubleValue()));
-        setAngle(angle);
+        setLength(((Number)props.get("length")).doubleValue());
+        setWidth(((Number)props.get("width")).doubleValue());
     }
 }
 

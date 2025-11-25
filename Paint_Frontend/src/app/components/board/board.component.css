@@ -36,7 +36,7 @@ canvas {
 /* Bottom-left grid/zoom controls */
 .controls-bar {
   position: absolute;
-  bottom: 12px;
+  bottom: 35px;
   left: 12px;
   display: flex;
   gap: 10px;

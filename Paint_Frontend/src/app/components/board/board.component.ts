@@ -177,6 +177,7 @@ if (this.activeTool === 'eyedropper' && e.target instanceof Konva.Shape) {
     pickedFill = '#000000';  // fallback
   }
 
+<<<<<<< HEAD
   this.canvasService.changeColor(pickedFill);
   return;
 }
@@ -257,6 +258,30 @@ if (this.activeTool === 'eyedropper' && e.target instanceof Konva.Shape) {
           this.canvasService.setSelectedShape(null);
         }
         return;
+=======
+  // ✨ UPDATE initKonvaEvents() - Add this at the beginning of the method:
+  private initKonvaEvents() {
+    this.stage.on('click tap', (e) => {
+      // Allow selection in select, move, resize, and rotate modes
+      if (!['select', 'move', 'resize', 'rotate'].includes(this.activeTool)) {
+        this.transformer.nodes([]);
+        this.notifyShapeSelection(null); // ✨ NEW: Notify deselection
+        return;
+      }
+
+      if (e.target === this.stage || e.target.id() === 'board-background') {
+        this.transformer.nodes([]);
+        this.notifyShapeSelection(null); // ✨ NEW: Notify deselection
+        return;
+      }
+
+      if (e.target.getParent()?.className !== 'Transformer') {
+        this.transformer.nodes([e.target]);
+        // ✨ NEW: Notify selection
+        if (this.isShape(e.target)) {
+          this.notifyShapeSelection(e.target as Konva.Shape);
+        }
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
       }
 
       // For 'resize' or 'rotate' we will not start new selection here; user should be in select tool to use transformer.
@@ -342,20 +367,114 @@ if (this.activeTool === 'eyedropper' && e.target instanceof Konva.Shape) {
       }
     });
 
+<<<<<<< HEAD
     // transformend (resize/rotate)
     this.stage.on('transformend', () => {
       const nodes = this.transformer.nodes();
       nodes.forEach((node) => {
+=======
+    // âœ… FIXED: Transformend - works for both resize AND rotate
+    this.transformer.on('transformend', (e) => {
+      // ⚠️ IMPORTANT: e.target is the Transformer, not the shape!
+      // We need to get the actual transformed shapes from transformer.nodes()
+      const transformedShapes = this.transformer.nodes();
+
+
+      // Update each transformed shape
+      transformedShapes.forEach(node => {
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
         if (this.isShape(node)) {
           this.updateShapePositionInBackend(node as Konva.Shape);
         }
       });
     });
+
+
+    // ✨ NEW: Track mouse movement for status bar
+    this.stage.on('mousemove', (e) => {
+      const pos = this.stage.getPointerPosition();
+      if (!pos) return;
+
+      const canvasPos = this.getCanvasPosition(pos.x, pos.y);
+      this.canvasService.updateMousePosition(
+        Math.round(canvasPos.x),
+        Math.round(canvasPos.y)
+      );
+    });
   }
 
+<<<<<<< HEAD
   // -------------------------
   // Helpers
   // -------------------------
+=======
+
+ /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // ✨ NEW: Notify service when shape is selected
+  private notifyShapeSelection(shape: Konva.Shape | null): void {
+    if (!shape) {
+      this.canvasService.selectShape(null);
+      return;
+    }
+
+    const shapeData = {
+      id: shape.getAttr('id') || shape._id.toString(),
+      type: this.getShapeType(shape),
+      fill: shape.attrs.fill || '#ffffff',
+      stroke: shape.attrs.stroke || '#000000',
+      strokeWidth: shape.attrs.strokeWidth || 2,
+      width: this.getShapeWidth(shape),
+      height: this.getShapeHeight(shape),
+      x: shape.attrs.x || 0,
+      y: shape.attrs.y || 0
+    };
+
+    this.canvasService.selectShape(shapeData);
+  }
+
+// Helper to get shape type
+  private getShapeType(shape: Konva.Shape): string {
+    if (shape instanceof Konva.Rect) {
+      return shape.getAttr('shapeType') || 'rectangle';
+    } else if (shape instanceof Konva.Circle) {
+      return 'circle';
+    } else if (shape instanceof Konva.Ellipse) {
+      return 'ellipse';
+    } else if (shape instanceof Konva.Line) {
+      return 'line';
+    } else if (shape instanceof Konva.RegularPolygon && shape.attrs.sides === 3) {
+      return 'triangle';
+    }
+    return 'unknown';
+  }
+
+// Helper to get shape width
+  private getShapeWidth(shape: Konva.Shape): number {
+    if (shape instanceof Konva.Rect) {
+      return shape.attrs.width * (shape.attrs.scaleX || 1);
+    } else if (shape instanceof Konva.Circle) {
+      return (shape.attrs.radius || 0) * 2 * (shape.attrs.scaleX || 1);
+    } else if (shape instanceof Konva.Ellipse) {
+      return (shape.attrs.radiusX || 0) * 2 * (shape.attrs.scaleX || 1);
+    }
+    return 0;
+  }
+
+// Helper to get shape height
+  private getShapeHeight(shape: Konva.Shape): number {
+    if (shape instanceof Konva.Rect) {
+      return shape.attrs.height * (shape.attrs.scaleY || 1);
+    } else if (shape instanceof Konva.Circle) {
+      return (shape.attrs.radius || 0) * 2 * (shape.attrs.scaleY || 1);
+    } else if (shape instanceof Konva.Ellipse) {
+      return (shape.attrs.radiusY || 0) * 2 * (shape.attrs.scaleY || 1);
+    }
+    return 0;
+  }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  // ✨ NEW: Type guard to check if a node is a Shape
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
   private isShape(node: Konva.Node): node is Konva.Shape {
     return node instanceof Konva.Shape && node.id() !== 'board-background';
   }
@@ -382,11 +501,20 @@ if (this.activeTool === 'eyedropper' && e.target instanceof Konva.Shape) {
   // Shape creation
   // -------------------------
   private createShape(tool: string, x: number, y: number): Konva.Shape | null {
+<<<<<<< HEAD
     const base: any = {
       x,
       y,
       fill: '#ffffff',
       stroke: '#090101',
+=======
+    // الإعدادات الافتراضية لكل الأشكال
+    const defaultConfig = {
+      x: x,
+      y: y,
+      fill: this.canvasService.getDefaultFillColor(),      // لون التعبئة (ابيض)
+      stroke: this.canvasService.getDefaultStrokeColor(),    // لون الحدود (أسود)
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
       strokeWidth: 2,
       draggable: false,
       listening: true
@@ -469,6 +597,7 @@ if (this.activeTool === 'eyedropper' && e.target instanceof Konva.Shape) {
     this.mainLayer.batchDraw();
   }
 
+<<<<<<< HEAD
   // -------------------------
   // Backend: send / update shapes
   // -------------------------
@@ -479,6 +608,18 @@ if (this.activeTool === 'eyedropper' && e.target instanceof Konva.Shape) {
       next: (res: any) => {
         if (res?.id) {
           shape.setAttr('id', res.id);
+=======
+// ✨ NEW: Send shape data to backend (إرسال بيانات الشكل للـ backend)
+  private sendShapeToBackend(shape: Konva.Shape): void {
+    const shapeData = this.formatShapeData(shape);
+
+    this.http.post(`${this.BACKEND_URL}`, shapeData).subscribe({
+      next: (response) => {
+        console.log('Shape saved successfully:', response);
+        if (response && (response as any).id) {
+          const shapeId = (response as any).id.toString();
+          shape.id(shapeId); // ✅ Just set Konva's ID
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
         }
       },
       error: (err) => {
@@ -517,6 +658,7 @@ if (this.activeTool === 'eyedropper' && e.target instanceof Konva.Shape) {
     if (!id) return;
 
     const updateData = {
+<<<<<<< HEAD
       id,
       x: shape.x(),
       y: shape.y(),
@@ -527,6 +669,18 @@ if (this.activeTool === 'eyedropper' && e.target instanceof Konva.Shape) {
         width: (shape as any).width ? (shape as any).width() : 0,
         height: (shape as any).height ? (shape as any).height() : 0
       }
+=======
+      id: shapeId,
+      x: x,
+      y: y,
+      centerX: centerX,
+      centerY: centerY,
+      angle: angle,
+      fillColor: shape.attrs.fill || '#ffffff',      // ✨ اللون الداخلي
+      outlineColor: shape.attrs.stroke || '#090101',  // ✨ لون الحدود
+      strokeWidth: shape.attrs.strokeWidth || 2,      // ✨ عرض الحدود
+      properties: properties
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
     };
 
     this.http.put(`${this.BACKEND_URL}/updateShape`, updateData).subscribe({
@@ -895,4 +1049,253 @@ if (this.activeTool === 'eyedropper' && e.target instanceof Konva.Shape) {
       }));
     }
   }
+<<<<<<< HEAD
+=======
+
+  toggleGrid() {
+    this.gridless = !this.gridless;
+    this.drawGrid();
+  }
+
+  // -------------------------
+  // Backend Logic
+  // -------------------------
+  private setupSubscriptions(): void {
+    this.subscriptions.add(
+      this.canvasService.action$.subscribe(action => this.handleAction(action))
+    );
+    // this.subscriptions.add(
+    //   this.canvasService.color$.subscribe(color => this.changeColor(color))
+    // );
+    this.subscriptions.add(
+      this.canvasService.save$.subscribe(data => this.exportFile(data.type, data.fileName))
+    );
+    this.subscriptions.add(
+      this.canvasService.load$.subscribe(file => this.uploadFile(file))
+    );
+
+
+
+    this.subscriptions.add(
+      this.canvasService.tool$.subscribe(tool => this.onToolChange(tool))
+    );
+
+
+    this.subscriptions.add(
+      this.canvasService.defaultFillColor$.subscribe(color => {
+        console.log('Default fill color changed to:', color);
+      })
+    );
+
+    this.subscriptions.add(
+      this.canvasService.defaultStrokeColor$.subscribe(color => {
+        console.log('Default stroke color changed to:', color);
+      })
+    );
+
+
+    ////////////////////////////////////////
+    // ✨ NEW: Handle property updates from properties bar
+    this.subscriptions.add(
+      this.canvasService.action$.subscribe(action => {
+        if (action.startsWith('update-')) {
+          this.handlePropertyUpdate(action);
+        } else {
+          this.handleAction(action);
+        }
+      })
+    );
+    /////////////////////////////////////////////////////////////
+  }
+
+  // ✨ NEW: Handle property updates from properties bar
+  private handlePropertyUpdate(action: string): void {
+    const parts = action.split(':');
+    const updateType = parts[0];
+    const shapeId = parts[1];
+
+    if (!shapeId) return;
+
+    const shape = this.mainLayer.findOne(`#${shapeId}`) as Konva.Shape;
+    if (!shape || !this.isShape(shape)) return;
+
+    switch (updateType) {
+      case 'update-fill':
+        const fillColor = parts[2];
+        shape.fill(fillColor);
+        this.mainLayer.batchDraw();
+        this.updateShapePositionInBackend(shape);
+        break;
+
+      case 'update-stroke':
+        const strokeColor = parts[2];
+        const strokeWidth = parseFloat(parts[3]);
+        shape.stroke(strokeColor);
+        shape.strokeWidth(strokeWidth);
+        this.mainLayer.batchDraw();
+        this.updateShapePositionInBackend(shape);
+        break;
+
+      case 'update-size':
+        const width = parseFloat(parts[2]);
+        const height = parseFloat(parts[3]);
+        this.updateShapeSize(shape, width, height);
+        break;
+
+      case 'update-position':
+        const x = parseFloat(parts[2]);
+        const y = parseFloat(parts[3]);
+        shape.x(x);
+        shape.y(y);
+        this.mainLayer.batchDraw();
+        this.updateShapePositionInBackend(shape);
+        break;
+    }
+  }
+
+// Helper to update shape size
+  private updateShapeSize(shape: Konva.Shape, width: number, height: number): void {
+    if (shape instanceof Konva.Rect) {
+      shape.width(width);
+      shape.height(height);
+    } else if (shape instanceof Konva.Circle) {
+      const radius = width / 2;
+      shape.radius(radius);
+    } else if (shape instanceof Konva.Ellipse) {
+      shape.radiusX(width / 2);
+      shape.radiusY(height / 2);
+    }
+
+    this.mainLayer.batchDraw();
+    this.updateShapePositionInBackend(shape);
+  }
+
+  private handleAction(action: string): void {
+    if (!this.stage) return;
+    const selectedNodes = this.transformer.nodes();
+    const activeObject = selectedNodes.length > 0 ? selectedNodes[0] : null;
+
+    switch (action) {
+      case 'copy':
+        if (activeObject && this.isShapeForFormat(activeObject)) {
+          // استخدم الصيغة الجديدة لبيانات الشكل
+          const shapeData = this.formatShapeData(activeObject);
+          if (shapeData) {
+            this.http.post(`${this.BACKEND_URL}/copy`, shapeData).subscribe({
+              next: (copiedShapeData: any) => {
+                // استخدم Konva.Shape.create بدلاً من Konva.Node.create
+                const newShape = Konva.Shape.create(copiedShapeData);
+                this.mainLayer.add(newShape);
+                this.transformer.nodes([newShape]);
+                // احفظ ID الجديد إذا كان موجوداً في الرد
+                if (copiedShapeData.id) {
+                  newShape.setAttr('id', copiedShapeData.id);
+                }
+              },
+              error: (err) => console.error('Copy failed', err)
+            });
+          }
+        }
+        break;
+
+      case 'delete':
+        if (activeObject) {
+          activeObject.destroy();
+          this.transformer.nodes([]);
+          this.saveStateToBackend('delete');
+        }
+        break;
+
+      case 'clear':
+        this.mainLayer.destroyChildren();
+        this.mainLayer.add(this.transformer);
+        this.transformer.nodes([]);
+        this.saveStateToBackend('clear');
+        break;
+
+      case 'undo':
+        this.performUndo();
+        break;
+
+      case 'redo':
+        this.performRedo();
+        break;
+    }
+  }
+
+
+  private saveStateToBackend(actionType: string): void {
+    if (!this.stage) return;
+    const stageJSON = this.stage.toJSON();
+    this.http.post(`${this.BACKEND_URL}/action`, {
+      action: actionType,
+      state: stageJSON
+    }).subscribe({
+      next: () => console.log(`State saved: ${actionType}`),
+      error: (err) => console.error('Error saving state', err)
+    });
+  }
+
+  private performUndo(): void {
+    this.http.post(`${this.BACKEND_URL}/undo`, {}).subscribe({
+      next: (state: any) => { if (state) this.loadCanvasState(state); },
+      error: (err) => console.error('Undo failed', err)
+    });
+  }
+
+  private performRedo(): void {
+    this.http.post(`${this.BACKEND_URL}/redo`, {}).subscribe({
+      next: (state: any) => { if (state) this.loadCanvasState(state); },
+      error: (err) => console.error('Redo failed', err)
+    });
+  }
+
+  private loadCanvasState(jsonState: any): void {
+    const container = this.getContainer();
+    if (!container) return;
+
+    this.stage.destroyChildren();
+
+    const newStage = Konva.Node.create(jsonState, container) as Konva.Stage;
+    this.stage = newStage;
+
+    const layers = this.stage.find('Layer') as Konva.Layer[];
+
+    this.mainLayer = layers.find(l => l.getChildren().length > 0 && !l.findOne('#board-background')) as Konva.Layer;
+    if (!this.mainLayer) {
+      this.mainLayer = new Konva.Layer();
+      this.stage.add(this.mainLayer);
+    }
+
+    this.gridLayer = layers.find(l => !!l.findOne('#board-background')) as Konva.Layer;
+    if (!this.gridLayer) {
+      this.gridLayer = new Konva.Layer();
+      this.stage.add(this.gridLayer);
+      this.gridLayer.moveToBottom();
+    }
+
+    this.transformer = new Konva.Transformer();
+    this.mainLayer.add(this.transformer);
+
+    this.initKonvaEvents();
+    this.drawGrid();
+  }
+
+  private exportFile(type: string, fileName: string): void {
+    if (!this.stage) return;
+    const canvasData = this.stage.toJSON();
+    this.http.post(`${this.BACKEND_URL}/export`, { name: fileName, type, data: canvasData })
+      .subscribe(res => console.log('File exported', res));
+  }
+
+  private uploadFile(file: File): void {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      this.loadCanvasState(content);
+      this.saveStateToBackend('file_loaded');
+    };
+    reader.readAsText(file);
+  }
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
 }
