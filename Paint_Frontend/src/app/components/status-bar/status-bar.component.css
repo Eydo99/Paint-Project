@@ -32,9 +32,12 @@
   font-weight: 600;
   color: #111827;
   font-size: 14px;
+<<<<<<< HEAD
+=======
   background: #c0d7f8;
   border-radius: 4px; /* Add this line */
   padding: 2px 8px;
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
 }
 
 .divider {

@@ -13,6 +13,11 @@ export class NavbarComponent {
 
   openMenu: string | null = null;
 
+<<<<<<< HEAD
+  colors: string[] = [
+    '#000000', '#FF0000', '#00FF00', '#0000FF',
+    '#FFFF00', '#FFA500', '#800080'
+=======
   // ✨ NEW: Track current default colors
   currentFillColor: string = '#ffffff';
   currentStrokeColor: string = '#090101';
@@ -38,6 +43,7 @@ export class NavbarComponent {
     '#8B4513', '#A0522D', '#D2691E', '#F5DEB3',
     // Cyan & Teal
     '#00FFFF', '#20B2AA', '#008B8B', '#008080'
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
   ];
 
   constructor(private canvasService: CanvasService) {}
@@ -46,6 +52,15 @@ export class NavbarComponent {
     this.openMenu = this.openMenu === menuName ? null : menuName;
   }
 
+<<<<<<< HEAD
+  performAction(action: string) {
+    this.canvasService.triggerAction(action);
+    this.openMenu = null;
+  }
+
+  selectColor(color: string) {
+    this.canvasService.changeColor(color);
+=======
   // ✨ NEW: Toggle between fill and stroke mode
   setColorMode(mode: 'fill' | 'stroke') {
     this.colorMode = mode;
@@ -66,6 +81,7 @@ export class NavbarComponent {
       this.canvasService.setDefaultStrokeColor(color);
     }
     // Also change selected shapes if any
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
     this.openMenu = null;
   }
 
@@ -76,9 +92,13 @@ export class NavbarComponent {
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
+<<<<<<< HEAD
+    if (file) this.canvasService.loadFile(file);
+=======
     if (file) {
       this.canvasService.loadFile(file);
     }
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
     this.openMenu = null;
   }
 }

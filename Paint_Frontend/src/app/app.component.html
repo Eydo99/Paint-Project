@@ -1,8 +1,20 @@
 <div class="app-layout">
+
+  <!-- TOP NAVBAR -->
   <app-navbar></app-navbar>
 
-  <div class="workspace">
-    <app-toolbar></app-toolbar> <app-board></app-board>     <app-properties-bar></app-properties-bar> </div>
+  <div class="body-layout">
+    <!-- LEFT TOOLBAR -->
+    <app-toolbar></app-toolbar>
 
+    <!-- WORKSPACE -->
+    <div class="workspace">
+      <app-board></app-board>
+      <app-properties-bar></app-properties-bar>
+    </div>
+  </div>
+
+  <!-- BOTTOM STATUS BAR -->
   <app-status-bar></app-status-bar>
+
 </div>

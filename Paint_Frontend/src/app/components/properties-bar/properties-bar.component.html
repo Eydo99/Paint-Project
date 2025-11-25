@@ -8,6 +8,10 @@
   <div class="section">
     <label class="label">Fill Color</label>
     <div class="color-input">
+<<<<<<< HEAD
+      <div class="color-box" [style.background]="fillColor"></div>
+      <input type="text" [(ngModel)]="fillColor" (ngModelChange)="updateFill()" />
+=======
       <div class="color-box"
            [style.background]="fillColor"
            (click)="openFillColorPicker()"></div>
@@ -21,6 +25,7 @@
              [value]="fillColor"
              (input)="onFillColorChange($event)"
              style="display: none;" />
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
     </div>
   </div>
 
@@ -28,6 +33,13 @@
   <div class="section">
     <label class="label">Border Color</label>
     <div class="color-input">
+<<<<<<< HEAD
+      <div class="color-box" [style.background]="strokeColor"></div>
+      <input type="text" [(ngModel)]="strokeColor" (ngModelChange)="updateStroke()" />
+    </div>
+  </div>
+
+=======
       <div class="color-box"
            [style.background]="strokeColor"
            (click)="openStrokeColorPicker()"></div>
@@ -49,6 +61,7 @@
 
 
 
+>>>>>>> 5e5c3906d7e7f6b45d74b98217a5f7a951802370
   <!-- Stroke Width -->
   <div class="section">
     <label class="label">Stroke Width</label>

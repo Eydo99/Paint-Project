@@ -1,12 +1,7 @@
-/* board.component.css */
-
-/* host */
 :host {
   display: block;
   width: 100%;
   height: 100%;
-  overflow: hidden;
-  position: relative;
 }
 
 /* Wrapper centers the board */
@@ -16,53 +11,45 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  background: #f4f4f4;
   overflow: hidden;
-  background: #f4f4f4; /* workspace background (optional) */
 }
 
-/* Board container wraps the canvas */
+/* Board container where Konva renders */
 .board-container {
   width: 960px;
   height: 720px;
-  overflow: hidden;
-  background: #ffffff;
+  background: white;
   border: 3px solid #57564F;
-  box-shadow: 15px 20px 40px rgba(0, 0, 0, 0.25);
   position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
-/* Canvas fills board container exactly */
+/* Canvas area */
 canvas {
   width: 100%;
   height: 100%;
   display: block;
-  transform-origin: top left;
-  cursor: crosshair;
-  image-rendering: crisp-edges;
-  image-rendering: pixelated;
 }
 
-/* Controls */
+/* Bottom-left grid/zoom controls */
 .controls-bar {
   position: absolute;
   bottom: 35px;
   left: 12px;
   display: flex;
-  gap: 8px;
-  align-items: center;
-
-  background: rgba(255,255,255,0.92);
-  padding: 8px 10px;
+  gap: 10px;
+  background: rgba(255,255,255,0.9);
+  padding: 8px 12px;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-  z-index: 40;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  z-index: 50;
 }
 
 .controls-bar button,
 .controls-bar select {
-  padding: 6px 10px;
-  font-size: 13px;
   cursor: pointer;
+  padding: 5px 8px;
+  font-size: 13px;
 }
-
-

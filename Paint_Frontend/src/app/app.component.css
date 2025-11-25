@@ -1,18 +1,56 @@
 .app-layout {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Full viewport height */
+  width: 100%;
+  height: 100vh;
   overflow: hidden;
 }
 
-.workspace {
+app-navbar {
+  height: 56px;
+  min-height: 56px;
+  width: 100%;
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  z-index: 900;  /* below toolbar but above canvas */
+  position: relative;
+}
+
+.body-layout {
   display: flex;
-  flex: 1; /* Takes up remaining height between navbar and status bar */
-  background-color: #f9f9f9;
+  flex: 1;
   overflow: hidden;
 }
 
-/* Make sure custom tags display as blocks or flex items */
-app-toolbar, app-properties-bar {
-  z-index: 10; /* Keep panels above the board if needed */
+/* LEFT TOOLBAR */
+app-toolbar {
+  width: 64px;
+  position: relative;  /* ← FIXED was WRONG */
+  background: #fff;
+  border-right: 1px solid #e5e5e5;
+  z-index: 950;
+}
+
+/* CENTER WORKSPACE */
+.workspace {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* RIGHT PROPERTIES BAR */
+app-properties-bar {
+  width: 320px;
+  min-width: 320px;
+  background: #fff;
+  border-left: 1px solid #e5e5e5;
+}
+
+/* BOTTOM STATUS BAR */
+app-status-bar {
+  position: fixed;
+  left: 64px;
+  right: 320px;
+  bottom: 0;
+  z-index: 999;
 }
