@@ -148,21 +148,26 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
 
   // ✨ UPDATE initKonvaEvents() - Add this at the beginning of the method:
   private initKonvaEvents() {
-    // âœ¨ Click/Tap handling with mode restrictions
     this.stage.on('click tap', (e) => {
       // Allow selection in select, move, resize, and rotate modes
       if (!['select', 'move', 'resize', 'rotate'].includes(this.activeTool)) {
         this.transformer.nodes([]);
+        this.notifyShapeSelection(null); // ✨ NEW: Notify deselection
         return;
       }
 
       if (e.target === this.stage || e.target.id() === 'board-background') {
         this.transformer.nodes([]);
+        this.notifyShapeSelection(null); // ✨ NEW: Notify deselection
         return;
       }
 
       if (e.target.getParent()?.className !== 'Transformer') {
         this.transformer.nodes([e.target]);
+        // ✨ NEW: Notify selection
+        if (this.isShape(e.target)) {
+          this.notifyShapeSelection(e.target as Konva.Shape);
+        }
       }
     });
 
@@ -221,14 +226,11 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     });
 
     // âœ… FIXED: Transformend - works for both resize AND rotate
-    this.stage.on('transformend', (e) => {
+    this.transformer.on('transformend', (e) => {
       // ⚠️ IMPORTANT: e.target is the Transformer, not the shape!
       // We need to get the actual transformed shapes from transformer.nodes()
       const transformedShapes = this.transformer.nodes();
 
-      console.log('🔍 Transform ended');
-      console.log('🔍 Active tool:', this.activeTool);
-      console.log('🔍 Transformed shapes count:', transformedShapes.length);
 
       // Update each transformed shape
       transformedShapes.forEach(node => {
@@ -239,8 +241,85 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
         }
       });
     });
+
+
+    // ✨ NEW: Track mouse movement for status bar
+    this.stage.on('mousemove', (e) => {
+      const pos = this.stage.getPointerPosition();
+      if (!pos) return;
+
+      const canvasPos = this.getCanvasPosition(pos.x, pos.y);
+      this.canvasService.updateMousePosition(
+        Math.round(canvasPos.x),
+        Math.round(canvasPos.y)
+      );
+    });
   }
 
+
+ /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // ✨ NEW: Notify service when shape is selected
+  private notifyShapeSelection(shape: Konva.Shape | null): void {
+    if (!shape) {
+      this.canvasService.selectShape(null);
+      return;
+    }
+
+    const shapeData = {
+      id: shape.getAttr('id') || shape._id.toString(),
+      type: this.getShapeType(shape),
+      fill: shape.attrs.fill || '#ffffff',
+      stroke: shape.attrs.stroke || '#000000',
+      strokeWidth: shape.attrs.strokeWidth || 2,
+      width: this.getShapeWidth(shape),
+      height: this.getShapeHeight(shape),
+      x: shape.attrs.x || 0,
+      y: shape.attrs.y || 0
+    };
+
+    this.canvasService.selectShape(shapeData);
+  }
+
+// Helper to get shape type
+  private getShapeType(shape: Konva.Shape): string {
+    if (shape instanceof Konva.Rect) {
+      return shape.getAttr('shapeType') || 'rectangle';
+    } else if (shape instanceof Konva.Circle) {
+      return 'circle';
+    } else if (shape instanceof Konva.Ellipse) {
+      return 'ellipse';
+    } else if (shape instanceof Konva.Line) {
+      return 'line';
+    } else if (shape instanceof Konva.RegularPolygon && shape.attrs.sides === 3) {
+      return 'triangle';
+    }
+    return 'unknown';
+  }
+
+// Helper to get shape width
+  private getShapeWidth(shape: Konva.Shape): number {
+    if (shape instanceof Konva.Rect) {
+      return shape.attrs.width * (shape.attrs.scaleX || 1);
+    } else if (shape instanceof Konva.Circle) {
+      return (shape.attrs.radius || 0) * 2 * (shape.attrs.scaleX || 1);
+    } else if (shape instanceof Konva.Ellipse) {
+      return (shape.attrs.radiusX || 0) * 2 * (shape.attrs.scaleX || 1);
+    }
+    return 0;
+  }
+
+// Helper to get shape height
+  private getShapeHeight(shape: Konva.Shape): number {
+    if (shape instanceof Konva.Rect) {
+      return shape.attrs.height * (shape.attrs.scaleY || 1);
+    } else if (shape instanceof Konva.Circle) {
+      return (shape.attrs.radius || 0) * 2 * (shape.attrs.scaleY || 1);
+    } else if (shape instanceof Konva.Ellipse) {
+      return (shape.attrs.radiusY || 0) * 2 * (shape.attrs.scaleY || 1);
+    }
+    return 0;
+  }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // ✨ NEW: Type guard to check if a node is a Shape
   private isShape(node: Konva.Node): node is Konva.Shape {
@@ -277,8 +356,8 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     const defaultConfig = {
       x: x,
       y: y,
-      fill: '#ffffff',      // لون التعبئة (ابيض)
-      stroke: '#090101',    // لون الحدود (أسود)
+      fill: this.canvasService.getDefaultFillColor(),      // لون التعبئة (ابيض)
+      stroke: this.canvasService.getDefaultStrokeColor(),    // لون الحدود (أسود)
       strokeWidth: 2,
       draggable: false,     // يمكن سحب الشكل
       rotation: 0  // ✨ Add initial angle = 0
@@ -398,18 +477,14 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
 
 // ✨ NEW: Send shape data to backend (إرسال بيانات الشكل للـ backend)
   private sendShapeToBackend(shape: Konva.Shape): void {
-    // جهز البيانات اللي هتتبعت حسب الصيغة المطلوبة
     const shapeData = this.formatShapeData(shape);
 
-    console.log('Sending shape to backend:', shapeData);
-
-    // ابعت للـ backend
     this.http.post(`${this.BACKEND_URL}`, shapeData).subscribe({
       next: (response) => {
         console.log('Shape saved successfully:', response);
-        // لو الـ backend رجع ID، احفظه في الشكل
         if (response && (response as any).id) {
-          shape.setAttr('id', (response as any).id);
+          const shapeId = (response as any).id.toString();
+          shape.id(shapeId); // ✅ Just set Konva's ID
         }
       },
       error: (err) => {
@@ -634,7 +709,10 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       y: y,
       centerX: centerX,
       centerY: centerY,
-      angle: angle,  // ✨ Include rotation angle
+      angle: angle,
+      fillColor: shape.attrs.fill || '#ffffff',      // ✨ اللون الداخلي
+      outlineColor: shape.attrs.stroke || '#090101',  // ✨ لون الحدود
+      strokeWidth: shape.attrs.strokeWidth || 2,      // ✨ عرض الحدود
       properties: properties
     };
 
@@ -1159,9 +1237,9 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     this.subscriptions.add(
       this.canvasService.action$.subscribe(action => this.handleAction(action))
     );
-    this.subscriptions.add(
-      this.canvasService.color$.subscribe(color => this.changeColor(color))
-    );
+    // this.subscriptions.add(
+    //   this.canvasService.color$.subscribe(color => this.changeColor(color))
+    // );
     this.subscriptions.add(
       this.canvasService.save$.subscribe(data => this.exportFile(data.type, data.fileName))
     );
@@ -1174,6 +1252,95 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     this.subscriptions.add(
       this.canvasService.tool$.subscribe(tool => this.onToolChange(tool))
     );
+
+
+    this.subscriptions.add(
+      this.canvasService.defaultFillColor$.subscribe(color => {
+        console.log('Default fill color changed to:', color);
+      })
+    );
+
+    this.subscriptions.add(
+      this.canvasService.defaultStrokeColor$.subscribe(color => {
+        console.log('Default stroke color changed to:', color);
+      })
+    );
+
+
+    ////////////////////////////////////////
+    // ✨ NEW: Handle property updates from properties bar
+    this.subscriptions.add(
+      this.canvasService.action$.subscribe(action => {
+        if (action.startsWith('update-')) {
+          this.handlePropertyUpdate(action);
+        } else {
+          this.handleAction(action);
+        }
+      })
+    );
+    /////////////////////////////////////////////////////////////
+  }
+
+  // ✨ NEW: Handle property updates from properties bar
+  private handlePropertyUpdate(action: string): void {
+    const parts = action.split(':');
+    const updateType = parts[0];
+    const shapeId = parts[1];
+
+    if (!shapeId) return;
+
+    const shape = this.mainLayer.findOne(`#${shapeId}`) as Konva.Shape;
+    if (!shape || !this.isShape(shape)) return;
+
+    switch (updateType) {
+      case 'update-fill':
+        const fillColor = parts[2];
+        shape.fill(fillColor);
+        this.mainLayer.batchDraw();
+        this.updateShapePositionInBackend(shape);
+        break;
+
+      case 'update-stroke':
+        const strokeColor = parts[2];
+        const strokeWidth = parseFloat(parts[3]);
+        shape.stroke(strokeColor);
+        shape.strokeWidth(strokeWidth);
+        this.mainLayer.batchDraw();
+        this.updateShapePositionInBackend(shape);
+        break;
+
+      case 'update-size':
+        const width = parseFloat(parts[2]);
+        const height = parseFloat(parts[3]);
+        this.updateShapeSize(shape, width, height);
+        break;
+
+      case 'update-position':
+        const x = parseFloat(parts[2]);
+        const y = parseFloat(parts[3]);
+        shape.x(x);
+        shape.y(y);
+        this.mainLayer.batchDraw();
+        this.updateShapePositionInBackend(shape);
+        break;
+    }
+  }
+
+// Helper to update shape size
+  private updateShapeSize(shape: Konva.Shape, width: number, height: number): void {
+    if (shape instanceof Konva.Rect) {
+      shape.width(width);
+      shape.height(height);
+    } else if (shape instanceof Konva.Circle) {
+      const radius = width / 2;
+      shape.radius(radius);
+    } else if (shape instanceof Konva.Ellipse) {
+      shape.radiusX(width / 2);
+      shape.radiusY(height / 2);
+    }
+
+    this.mainLayer.batchDraw();
+    this.updateShapePositionInBackend(shape);
   }
 
   private handleAction(action: string): void {
@@ -1229,17 +1396,6 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private changeColor(color: string): void {
-    if (!this.stage) return;
-    const selectedNodes = this.transformer.nodes();
-    if (selectedNodes.length > 0) {
-      selectedNodes.forEach(node => {
-        node.setAttrs({ fill: color, stroke: color });
-      });
-      this.mainLayer.batchDraw();
-      this.saveStateToBackend('color_change');
-    }
-  }
 
   private saveStateToBackend(actionType: string): void {
     if (!this.stage) return;

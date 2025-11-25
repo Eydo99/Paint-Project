@@ -1,0 +1,44 @@
+.status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  height: 40px;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 20px;
+
+  font-family: Inter, sans-serif;
+  z-index: 500;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-label {
+  color: #6b7280; /* grey */
+  font-size: 14px;
+}
+
+.status-value {
+  font-weight: 600;
+  color: #111827;
+  font-size: 14px;
+  background: #c0d7f8;
+  border-radius: 4px; /* Add this line */
+  padding: 2px 8px;
+}
+
+.divider {
+  width: 1px;
+  height: 18px;
+  background: #d1d5db;
+}
