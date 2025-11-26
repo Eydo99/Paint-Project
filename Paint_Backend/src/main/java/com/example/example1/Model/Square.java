@@ -30,6 +30,8 @@ public class Square extends shape {
     public shape clone() {
         Square clone=(Square)super.clone();
         clone.sideLength=this.sideLength;
+        clone.x=this.x+10;
+        clone.y=this.y+10;
         return clone;
     }
 

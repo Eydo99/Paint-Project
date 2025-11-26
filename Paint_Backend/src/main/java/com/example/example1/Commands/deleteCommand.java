@@ -25,4 +25,9 @@ public class deleteCommand implements Command {
     public shape getShape() {
         return shape;
     }
+
+    @Override
+    public String getAction() {
+        return "remove";
+    }
 }

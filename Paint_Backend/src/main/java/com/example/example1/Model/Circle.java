@@ -34,6 +34,8 @@ public class Circle extends shape {
     {
         Circle clone=(Circle)super.clone();
         clone.radius=this.radius;
+        clone.centerX=this.centerX+10;
+        clone.centerY=this.centerY+10;
         return clone;
     }
 

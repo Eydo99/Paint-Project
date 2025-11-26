@@ -16,8 +16,8 @@ public class Rectangle extends shape {
     @Override
     public Map<String, Object> getProperties() {
         Map<String,Object> props=new HashMap<>();
-        props.put("length",this.length);
-        props.put("width",this.width);
+        props.put("length",this.width);
+        props.put("width",this.length);
         return props;
     }
 
@@ -43,6 +43,8 @@ public class Rectangle extends shape {
         Rectangle clone=(Rectangle)super.clone();
         clone.length=this.length;
         clone.width=this.width;
+        clone.x=this.x+10;
+        clone.y=this.y+10;
         return clone;
     }
 

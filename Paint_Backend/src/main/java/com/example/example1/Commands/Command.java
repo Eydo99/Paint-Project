@@ -6,4 +6,5 @@ public interface Command {
     void execute();
     void undo();
     shape getShape();
+    String getAction();
 }

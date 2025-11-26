@@ -6,8 +6,8 @@
       <li class="dropdown">
         <span (click)="toggleMenu('file')">File <i class="ri-arrow-down-s-line"></i></span>
         <div class="dropdown-content" *ngIf="openMenu === 'file'">
-          <a (click)="saveFile('json')">Save as JSON</a>
-          <a (click)="saveFile('xml')">Save as XML</a>
+          <a (click)="openSaveDialog('json')">Save as JSON</a>
+          <a (click)="openSaveDialog('xml')">Save as XML</a>
           <label for="fileUpload" class="upload-label">Load File</label>
           <input type="file" id="fileUpload" (change)="onFileSelected($event)" accept=".json,.xml" style="display: none;">
         </div>
@@ -65,3 +65,40 @@
 
   </div>
 </nav>
+
+<!-- ✨ Save Dialog Modal - ADD THIS -->
+<div *ngIf="showSaveDialog" class="modal-overlay" (click)="closeSaveDialog()">
+  <div class="save-dialog" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h3>Save as {{ saveFormat.toUpperCase() }}</h3>
+      <button class="close-btn" (click)="closeSaveDialog()">×</button>
+    </div>
+
+    <div class="dialog-body">
+      <div class="form-group">
+        <label>File Name:</label>
+        <input 
+          type="text" 
+          [(ngModel)]="saveFileName" 
+          placeholder="Enter file name"
+          class="form-input"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Save Path (optional):</label>
+        <input 
+          type="text" 
+          [(ngModel)]="savePath" 
+          placeholder="e.g., /documents/projects"
+          class="form-input"
+        />
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button class="btn-cancel" (click)="closeSaveDialog()">Cancel</button>
+      <button class="btn-save" (click)="confirmSave()">Save</button>
+    </div>
+  </div>
+</div>

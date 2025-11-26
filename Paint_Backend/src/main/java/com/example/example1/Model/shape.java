@@ -26,7 +26,33 @@ public abstract class shape implements Cloneable {
     protected String outlineColor;
     protected int strokeWidth;
     protected double angle;
+    protected String action;
+    protected boolean undoAvailable;
+    protected boolean redoAvailable;
 
+    public boolean isUndoAvailable() {
+        return undoAvailable;
+    }
+
+    public void setUndoAvailable(boolean undoAvailable) {
+        this.undoAvailable = undoAvailable;
+    }
+
+    public boolean isRedoAvailable() {
+        return redoAvailable;
+    }
+
+    public void setRedoAvailable(boolean redoAvailable) {
+        this.redoAvailable = redoAvailable;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
 
     @XmlElement
     public double getAngle() {

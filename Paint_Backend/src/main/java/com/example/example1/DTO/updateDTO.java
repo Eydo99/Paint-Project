@@ -13,6 +13,15 @@ public class updateDTO {
     private String outlineColor;
     private int strokeWidth;
     private Map<String,Object> properties;
+    private String action;
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
 
     public double getAngle() {
         return angle;

@@ -3,6 +3,7 @@ package com.example.example1.shapeService;
 import java.util.List;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ import java.io.File;
 @Service
 public class XMLService {
 
-    public void saveShapesToXML(List<shape> shapes, String filePath) throws Exception {
+    public void saveShapesToXML(List<shape> shapes, String filePath) throws JAXBException {
 
         ShapeListWrapper wrapper = new ShapeListWrapper(shapes);
 

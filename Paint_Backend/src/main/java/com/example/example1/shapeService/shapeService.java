@@ -3,6 +3,9 @@ package com.example.example1.shapeService;
 import com.example.example1.Commands.*;
 import com.example.example1.DTO.shapeDTO;
 import com.example.example1.DTO.updateDTO;
+//import com.example.example1.Exceptions.IllegalShapeTypeException;
+//import com.example.example1.Exceptions.ShapeNotFoundException;
+//import com.example.example1.Exceptions.UndoRedoException;
 import com.example.example1.Exceptions.IllegalShapeTypeException;
 import com.example.example1.Exceptions.ShapeNotFoundException;
 import com.example.example1.Exceptions.UndoRedoException;
@@ -12,8 +15,10 @@ import com.example.example1.Factory.shapeFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.IllformedLocaleException;
 import java.util.List;
 
 @Service
@@ -21,11 +26,15 @@ public class shapeService {
 
     List<shape> shapes = new ArrayList<>();
     shapeFactory shapeFactory = new shapeFactory();
+
+    @Autowired
     commandManager commandManager = new commandManager();
     private int nextID = 1;
 
     @Autowired
     private XMLService xmlService;
+
+    @Autowired
     private JSONService jsonService;
 
     public shape createShape(shapeDTO DTO) throws IllegalShapeTypeException {
@@ -91,11 +100,11 @@ public class shapeService {
 
     private shape getShapeById(int id) throws ShapeNotFoundException {
         return shapes.stream().filter(shape -> shape.getId().equals(String.valueOf(id))).findFirst()
-                .orElseThrow(() -> new ShapeNotFoundException(id));
+                .orElseThrow(() -> new ShapeNotFoundException( id ));
     }
 
 
-    public void saveToXML(String filePath) throws Exception {
+    public void saveToXML(String filePath) throws JAXBException {
         xmlService.saveShapesToXML(shapes, filePath);
     }
 

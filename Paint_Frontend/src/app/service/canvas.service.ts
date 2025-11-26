@@ -7,8 +7,8 @@ import { Subject } from 'rxjs';
 export class CanvasService {
   // دول subjects
   private actionSource = new Subject<string>();
- // private colorSource = new Subject<string>();
-  private saveSource = new Subject<{type: string, fileName: string}>();
+  // private colorSource = new Subject<string>();
+  private saveSource = new Subject<{ type: string, fileName: string, path?: string }>();
   private loadSource = new Subject<File>();
 
   //   الـ Board هي (Subscribe) للقنوات دي
@@ -25,7 +25,7 @@ export class CanvasService {
   // Add after the tool$ observable (around line 25):
 
   // ✨ NEW: For mouse position tracking
-  private mousePositionSource = new Subject<{x: number, y: number}>();
+  private mousePositionSource = new Subject<{ x: number, y: number }>();
   mousePosition$ = this.mousePositionSource.asObservable();
 
   // ✨ NEW: For default colors
@@ -34,11 +34,11 @@ export class CanvasService {
   defaultFillColor$ = this.defaultFillColorSource.asObservable();
   defaultStrokeColor$ = this.defaultStrokeColorSource.asObservable();
 
-// Current default colors
+  // Current default colors
   private currentDefaultFill = '#ffffff';
   private currentDefaultStroke = '#090101';
 
-// Methods to change default colors
+  // Methods to change default colors
   setDefaultFillColor(color: string) {
     this.currentDefaultFill = color;
     this.defaultFillColorSource.next(color);
@@ -49,7 +49,7 @@ export class CanvasService {
     this.defaultStrokeColorSource.next(color);
   }
 
-// Getters for current defaults
+  // Getters for current defaults
   getDefaultFillColor(): string {
     return this.currentDefaultFill;
   }
@@ -61,22 +61,22 @@ export class CanvasService {
 
 
 
-// Method to update mouse position
+  // Method to update mouse position
   updateMousePosition(x: number, y: number) {
     this.mousePositionSource.next({ x, y });
   }
 
   ////////////////////////////////////////////////////////////////////////////
-// ✨ NEW: For Properties Bar communication
+  // ✨ NEW: For Properties Bar communication
   private selectedShapeSource = new Subject<any>();
   selectedShape$ = this.selectedShapeSource.asObservable();
 
-// Method to notify when a shape is selected
+  // Method to notify when a shape is selected
   selectShape(shapeData: any) {
     this.selectedShapeSource.next(shapeData);
   }
 
-// Methods to update shape properties
+  // Methods to update shape properties
   updateFillColor(shapeId: string, color: string) {
     // This will be handled in the board component
     this.actionSource.next(`update-fill:${shapeId}:${color}`);
@@ -94,7 +94,7 @@ export class CanvasService {
     this.actionSource.next(`update-position:${shapeId}:${x}:${y}`);
   }
 
-/////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////
 
   // Method لتغيير الـ Tool
   setTool(tool: string) {
@@ -113,8 +113,8 @@ export class CanvasService {
 
 
 
-  saveFile(type: string, name: string = 'drawing') {
-    this.saveSource.next({ type, fileName: name });
+  saveFile(type: string, name: string = 'drawing', path: string = '') {
+    this.saveSource.next({ type, fileName: name, path });
   }
 
   loadFile(file: File) {

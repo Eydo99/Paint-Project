@@ -17,13 +17,20 @@ public class addCommand implements Command {
     @Override
     public void execute() {
         shapes.add(shape);
+        System.out.println("➕ Shape added: " + shape.getId());
     }
     public void undo() {
         shapes.remove(shape);
+        System.out.println("➖ Shape removed: " + shape.getId());
     }
 
     @Override
     public shape getShape() {
         return shape;
+    }
+
+    @Override
+    public String getAction() {
+        return "add";
     }
 }

@@ -55,4 +55,10 @@ public class updateCommand implements Command {
     public shape getShape() {
         return shape;
     }
+
+
+    @Override
+    public String getAction() {
+        return "update";
+    }
 }

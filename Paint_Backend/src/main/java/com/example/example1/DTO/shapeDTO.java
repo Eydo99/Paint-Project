@@ -16,6 +16,16 @@ public class shapeDTO {
     private double centerY;
     private double angle;
 
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    private String action;
+
 
     public double getAngle() {
         return angle;

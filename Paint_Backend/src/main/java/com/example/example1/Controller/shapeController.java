@@ -4,6 +4,9 @@ package com.example.example1.Controller;
 import com.example.example1.DTO.fileDTO;
 import com.example.example1.DTO.shapeDTO;
 import com.example.example1.DTO.updateDTO;
+//import com.example.example1.Exceptions.IllegalShapeTypeException;
+//import com.example.example1.Exceptions.ShapeNotFoundException;
+//import com.example.example1.Exceptions.UndoRedoException;
 import com.example.example1.Exceptions.IllegalShapeTypeException;
 import com.example.example1.Exceptions.ShapeNotFoundException;
 import com.example.example1.Exceptions.UndoRedoException;
@@ -12,12 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import com.example.example1.shapeService.shapeService;
 
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 import java.util.List;
 
 
 @RestController
 @RequestMapping("/api/shape")
-@CrossOrigin(origins = "http://localhost:4200") // allow Angular frontend
+@CrossOrigin(origins = "http://localhost:54981") // allow Angular frontend
 public class shapeController {
 
     @Autowired
@@ -27,7 +32,7 @@ public class shapeController {
     public shape addShape(@RequestBody shapeDTO dto) throws IllegalShapeTypeException {
         return shapeService.createShape(dto);
     }
-    
+
     @GetMapping
     public List<shape> getShapes() {
         return shapeService.getShapes();
@@ -61,20 +66,21 @@ public class shapeController {
 
     @PostMapping("/undo")
     public shape undo() throws UndoRedoException {
-       return  shapeService.undo();
+        return  shapeService.undo();
     }
 
     @PostMapping("/redo")
     public shape redo() throws UndoRedoException {
-       return  shapeService.redo();
+        return  shapeService.redo();
     }
 
+
     @PostMapping("/save/xml")
-    public void savefilexml(@RequestBody fileDTO dto) throws Exception  {
+    public void savefilexml(@RequestBody fileDTO dto) throws JAXBException {
         shapeService.saveToXML(dto.getFullPath()+".xml") ;
     }
     @PostMapping("/save/json")
-    public void savefilejson(@RequestBody fileDTO dto) throws Exception  {
+    public void savefilejson(@RequestBody fileDTO dto) throws IOException {
         shapeService.saveToJSON(dto.getFullPath()+".json") ;
     }
 }

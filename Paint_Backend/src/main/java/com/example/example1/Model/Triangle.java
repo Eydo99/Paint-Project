@@ -45,6 +45,8 @@ public class Triangle extends shape {
         Triangle clone=(Triangle)super.clone();
         clone.base=this.base;
         clone.height=this.height;
+        clone.centerX=this.centerX+10;
+        clone.centerY=this.centerY+10;
         return clone;
     }
 

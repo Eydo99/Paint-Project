@@ -61,35 +61,13 @@
 
   <div class="separator"></div>
 
-  <!-- Brushes -->
-  <button class="tool-btn" [class.active]="activeTool === 'brush'" (click)="setTool('brush')">
-    <lucide-icon name="brush"></lucide-icon>
-  </button>
+  
 
   <button class="tool-btn" [class.active]="activeTool === 'pencil'" (click)="setTool('pencil')">
-    <lucide-icon name="pencil"></lucide-icon>
-  </button>
+  <lucide-icon name="pencil"></lucide-icon>
+</button>
 
-  <button class="tool-btn" [class.active]="activeTool === 'freehand'" (click)="setTool('freehand')">
-    <lucide-icon name="signature"></lucide-icon>
-  </button>
-
-  <button class="tool-btn" [class.active]="activeTool === 'eraser'" (click)="setTool('eraser')">
-    <lucide-icon name="eraser"></lucide-icon>
-  </button>
-
-  <div class="separator"></div>
-
-  <!-- Color Tools -->
-  <button class="tool-btn" [class.active]="activeTool === 'fill'" (click)="setTool('fill')">
-    <lucide-icon name="paint-bucket"></lucide-icon>
-  </button>
-
-  <button class="tool-btn" [class.active]="activeTool === 'eyedropper'" (click)="setTool('eyedropper')">
-    <lucide-icon name="pipette"></lucide-icon>
-  </button>
-
-  <div class="separator"></div>
+ 
 
   <!-- Actions -->
   <button class="tool-btn" (click)="setTool('copy')">
@@ -101,5 +79,3 @@
   </button>
 
 </div>
-
-

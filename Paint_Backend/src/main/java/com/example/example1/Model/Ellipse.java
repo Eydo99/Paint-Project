@@ -44,6 +44,8 @@ public class Ellipse extends shape {
         Ellipse clone=(Ellipse)super.clone();
         clone.radiusX=this.radiusX;
         clone.radiusY=this.radiusY;
+        clone.x=this.x+10;
+        clone.y=this.y+10;
         return clone;
     }
 

@@ -49,6 +49,8 @@ public class Text extends shape {
         clone.fontFamily = fontFamily;
         clone.fontStyle = fontStyle;
         clone.fontSize = fontSize;
+        clone.x=this.x+10;
+        clone.y=this.y+10;
         return clone;
     }
 

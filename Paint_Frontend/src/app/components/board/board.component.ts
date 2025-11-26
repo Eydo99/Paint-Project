@@ -31,6 +31,14 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
   private subscriptions: Subscription = new Subscription();
   private readonly BACKEND_URL = 'http://localhost:8080/api/shape';
 
+
+  undoAvailable = false;
+  redoAvailable = false;
+
+  private isEditingText=false;
+
+
+
   // logical drawing area
   canvasWidth = 960;
   canvasHeight = 720;
@@ -76,7 +84,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
   constructor(
     private canvasService: CanvasService,
     private http: HttpClient
-  ) {}
+  ) { }
 
   ngAfterViewInit(): void {
     // استخدام setTimeout للتأكد من أن DOM جاهز تماماً
@@ -124,7 +132,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     // 3. Transformer
     this.transformer = new Konva.Transformer();
     this.mainLayer.add(this.transformer);
-   //إنشاء Background
+    //إنشاء Background
     const bg = new Konva.Rect({
       width: this.canvasWidth,
       height: this.canvasHeight,
@@ -180,16 +188,45 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
         return;
       }
 
+
+      if (['select', 'move', 'resize', 'rotate'].includes(this.activeTool)) {
+        return;
+      }
+
+
+
+
+
+
       const pos = this.stage.getPointerPosition();
       if (!pos) return;
 
       const canvasPos = this.getCanvasPosition(pos.x, pos.y);
 
+
+
+      if (this.activeTool === 'text') {
+        const textNode = this.createText(canvasPos.x, canvasPos.y);
+        this.transformer.nodes([textNode]);
+        this.sendShapeToBackend(textNode);
+        return;
+      }
+
+
+
+
+
+
       this.isDrawing = true;
       this.startX = canvasPos.x;
       this.startY = canvasPos.y;
 
-      this.currentShape = this.createShape(this.activeTool, canvasPos.x, canvasPos.y);
+      if (this.activeTool === 'pencil') {
+        this.currentShape = this.createPencil(canvasPos.x, canvasPos.y);
+      } else {
+        this.currentShape = this.createShape(this.activeTool, canvasPos.x, canvasPos.y);
+      }
+
 
       if (this.currentShape) {
         this.mainLayer.add(this.currentShape);
@@ -204,8 +241,20 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       if (!pos) return;
 
       const canvasPos = this.getCanvasPosition(pos.x, pos.y);
+
+      // ✨ Pencil logic (add new points continuously)
+      if (this.activeTool === 'pencil' && this.currentShape instanceof Konva.Line) {
+        const newPoints = this.currentShape.points().concat([canvasPos.x, canvasPos.y]);
+        this.currentShape.points(newPoints);
+        this.mainLayer.batchDraw();
+        return; // STOP, don't run updateShape()
+      }
+
+      // Normal shapes logic
       this.updateShape(this.currentShape, this.startX, this.startY, canvasPos.x, canvasPos.y);
     });
+
+
 
     this.stage.on('mouseup touchend', (e) => {
       if (!this.isDrawing || !this.currentShape) return;
@@ -215,6 +264,8 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       this.transformer.nodes([this.currentShape]);
       this.currentShape = null;
     });
+
+
 
     // âœ… FIXED: Dragend - only if in 'move' mode
     this.stage.on('dragend', (e) => {
@@ -257,7 +308,14 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
   }
 
 
- /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // ✨ NEW: Notify service when shape is selected
   private notifyShapeSelection(shape: Konva.Shape | null): void {
     if (!shape) {
@@ -265,9 +323,15 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
+    // ✨ Handle text type in selection
+    let shapeType = this.getShapeType(shape);
+    if (shape instanceof Konva.Text) {
+      shapeType = 'text'; // Explicitly set text type
+    }
+
     const shapeData = {
       id: shape.getAttr('id') || shape._id.toString(),
-      type: this.getShapeType(shape),
+      type: shapeType,
       fill: shape.attrs.fill || '#ffffff',
       stroke: shape.attrs.stroke || '#000000',
       strokeWidth: shape.attrs.strokeWidth || 2,
@@ -280,8 +344,12 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     this.canvasService.selectShape(shapeData);
   }
 
-// Helper to get shape type
+  // Helper to get shape type
   private getShapeType(shape: Konva.Shape): string {
+    // ✨ NEW: Add text check first
+    if (shape instanceof Konva.Text) {
+      return 'text';
+    }
     if (shape instanceof Konva.Rect) {
       return shape.getAttr('shapeType') || 'rectangle';
     } else if (shape instanceof Konva.Circle) {
@@ -296,7 +364,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     return 'unknown';
   }
 
-// Helper to get shape width
+  // Helper to get shape width
   private getShapeWidth(shape: Konva.Shape): number {
     if (shape instanceof Konva.Rect) {
       return shape.attrs.width * (shape.attrs.scaleX || 1);
@@ -308,7 +376,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     return 0;
   }
 
-// Helper to get shape height
+  // Helper to get shape height
   private getShapeHeight(shape: Konva.Shape): number {
     if (shape instanceof Konva.Rect) {
       return shape.attrs.height * (shape.attrs.scaleY || 1);
@@ -319,7 +387,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     }
     return 0;
   }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // ✨ NEW: Type guard to check if a node is a Shape
   private isShape(node: Konva.Node): node is Konva.Shape {
@@ -329,7 +397,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       node.id() !== 'board-background';
   }
 
-// ✨ NEW: Type guard to check if a node is a Shape for formatShapeData
+  // ✨ NEW: Type guard to check if a node is a Shape for formatShapeData
   private isShapeForFormat(node: Konva.Node): node is Konva.Shape {
     return node instanceof Konva.Shape &&
       !(node instanceof Konva.Stage) &&
@@ -339,7 +407,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
   // ✨ NEW: Convert stage position to canvas position (تحويل موضع الشاشة لموضع الـ canvas)
   // السبب: الماوس بيدينا إحداثيات على الشاشة، لكن احنا محتاجين إحداثيات على الـ canvas المنطقي
   // لازم نحسب الـ pan (موضع الـ stage) والـ zoom (التكبير)
-  private getCanvasPosition(stageX: number, stageY: number): {x: number, y: number} {
+  private getCanvasPosition(stageX: number, stageY: number): { x: number, y: number } {
     const stagePos = this.stage.position();  // موضع الـ stage الحالي
     const scale = this.stage.scaleX();       // مستوى التكبير
 
@@ -363,7 +431,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       rotation: 0  // ✨ Add initial angle = 0
     };
 
-    switch(tool) {
+    switch (tool) {
       case 'rect':
         // مستطيل: عرض وارتفاع حر
         return new Konva.Rect({
@@ -407,16 +475,18 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
         });
 
       case 'line':
-        // خط: نقطتين
-        return new Konva.Line({
-          ...defaultConfig,
-          points: [x, y, x, y],  // من (x,y) إلى (x,y) - نقطة واحدة في البداية
-          fill: undefined,        // الخط ما عندوش تعبئة
-          strokeWidth: 3,
-          listening: true,  // âœ… Enable event listening
-          lineCap: 'round',
-          lineJoin: 'round'
-        });
+  // خط: نقطتين
+  return new Konva.Line({
+    ...defaultConfig,
+    x: 0,  // ✨ CHANGED: Set to 0 instead of x
+    y: 0,  // ✨ CHANGED: Set to 0 instead of y
+    points: [x, y, x, y],  // Points are now absolute coordinates
+    fill: undefined,
+    strokeWidth: 3,
+    listening: true,
+    lineCap: 'round',
+    lineJoin: 'round'
+  });
 
       default:
         return null;
@@ -475,7 +545,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     this.mainLayer.batchDraw();
   }
 
-// ✨ NEW: Send shape data to backend (إرسال بيانات الشكل للـ backend)
+  // ✨ NEW: Send shape data to backend (إرسال بيانات الشكل للـ backend)
   private sendShapeToBackend(shape: Konva.Shape): void {
     const shapeData = this.formatShapeData(shape);
 
@@ -504,6 +574,29 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
 
     const shape = node as Konva.Shape;
     const angle = shape.attrs.rotation || 0;
+
+    // ✨ NEW: Handle TEXT first (before other shapes)
+    if (shape instanceof Konva.Text) {
+      return {
+        fillColor: shape.attrs.fill || '#ffffff',
+        outlineColor: shape.attrs.stroke || '#090101',
+        strokeWidth: shape.attrs.strokeWidth || 2,
+        type: 'text',
+        x: shape.attrs.x || 0,
+        y: shape.attrs.y || 0,
+        centerX: shape.attrs.x || 0,
+        centerY: shape.attrs.y || 0,
+        angle: angle,
+        properties: {
+          fontFamily: shape.attrs.fontFamily || 'Arial',
+          fontSize: shape.attrs.fontSize || 28,
+          fontStyle: shape.attrs.fontStyle || 'normal',
+          content: shape.attrs.text || 'Text'
+        }
+      };
+    }
+
+
     const baseData = {
       fillColor: shape.attrs.fill || '#ffffff',
       outlineColor: shape.attrs.stroke || '#090101',
@@ -598,7 +691,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     };
   }
   // ✨ ENHANCED: Update shape position, rotation, AND properties in backend
-// Works for: dragend, transformend (resize + rotate)
+  // Works for: dragend, transformend (resize + rotate)
   private updateShapePositionInBackend(shape: Konva.Shape): void {
     const shapeId = shape.getAttr('id');
     if (!shapeId) {
@@ -614,6 +707,49 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
 
     // ✨ Get rotation angle
     const angle = shape.attrs.rotation || 0;
+
+
+    if (shape instanceof Konva.Text) {
+      x = shape.attrs.x || 0;
+      y = shape.attrs.y || 0;
+      centerX = x;
+      centerY = y;
+
+      properties = {
+        fontFamily: shape.attrs.fontFamily || 'Arial',
+        fontSize: shape.attrs.fontSize || 28,
+        fontStyle: shape.attrs.fontStyle || 'normal',
+        content: shape.attrs.text || 'Text'
+      };
+
+      const updateData = {
+        id: shapeId,
+        x: x,
+        y: y,
+        centerX: centerX,
+        centerY: centerY,
+        angle: angle,
+        fillColor: shape.attrs.fill || '#ffffff',
+        outlineColor: shape.attrs.stroke || '#090101',
+        strokeWidth: shape.attrs.strokeWidth || 2,
+        type: 'text',
+        properties: properties
+      };
+
+      console.log('📝 Updating text in backend:', updateData);
+
+      this.http.put(`${this.BACKEND_URL}/updateShape`, updateData).subscribe({
+        next: (response) => {
+          console.log('✅ Text updated successfully in backend:', response);
+        },
+        error: (err) => {
+          console.error('❌ Failed to update text in backend:', err);
+        }
+      });
+      return; // ✨ Important: exit here for text
+    }
+
+
 
     // Calculate center and properties based on shape type
     if (shape instanceof Konva.Rect) {
@@ -733,9 +869,273 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       }
     });
   }
+
+
+ startEditingText(textNode: Konva.Text) {
+  // ✅ Prevent starting a new edit if already editing
+  if (this.isEditingText) {
+    return;
+  }
+
+  this.isEditingText = true;
+
+  // Remove transformer while editing
+  this.transformer.nodes([]);
+
+  const textarea = document.createElement("textarea");
+  textarea.value = textNode.text();
+  textarea.style.position = "absolute";
+  textarea.style.background = "white";
+  textarea.style.border = "1px solid #888";
+  textarea.style.padding = "4px";
+  textarea.style.zIndex = "9999";
+  textarea.style.resize = "none";
+  textarea.style.fontSize = textNode.fontSize() + "px";
+  textarea.style.fontFamily = textNode.fontFamily();
+  textarea.style.lineHeight = textNode.lineHeight().toString();
+
+  // Position textarea exactly on top of the text
+  const textPosition = textNode.getClientRect();
+  const stageBox = this.stage.container().getBoundingClientRect();
+
+  const minWidth = 150;
+  const minHeight = 50;
+
+  textarea.style.width = Math.max(textPosition.width + 40, minWidth) + "px";
+  textarea.style.height = Math.max(textPosition.height + 30, minHeight) + "px";
+
+  textarea.style.left = stageBox.left + textPosition.x + "px";
+  textarea.style.top = stageBox.top + textPosition.y + "px";
+
+  document.body.appendChild(textarea);
+  textarea.focus();
+
+  // ✅ Use a flag to ensure finishEditing is only called once
+  let editingFinished = false;
+
+  const finishEditing = () => {
+    if (editingFinished) return;
+    editingFinished = true;
+
+    // ✅ Check if textarea still exists in DOM before removing
+    if (textarea.parentNode) {
+      textarea.parentNode.removeChild(textarea);
+    }
+
+    textNode.text(textarea.value);
+    textNode.show();
+    this.mainLayer.draw();
+    this.updateShapePositionInBackend(textNode);
+    
+    this.isEditingText = false; // ✅ Reset flag
+  };
+
+  textarea.addEventListener("blur", finishEditing);
+
+  textarea.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      finishEditing();
+    }
+    if (e.key === "Escape") {
+      finishEditing();
+    }
+  });
+}
+
+
+  createText(x: number, y: number): Konva.Text {
+    const textNode = new Konva.Text({
+      text: "Text",
+      x,
+      y,
+      fontSize: 28,
+      fontFamily: "Arial",
+      fontStyle: "normal",
+      fill: this.canvasService.getDefaultFillColor(),
+      draggable: true,
+      padding: 4
+
+    });
+
+
+
+
+
+    textNode.on("dragend", () => {
+      this.updateShapePositionInBackend(textNode);
+    });
+
+    textNode.on("transformend", () => {
+      // Get the scale values
+      const scaleX = textNode.scaleX();
+      const scaleY = textNode.scaleY();
+
+      // Use the average scale to maintain aspect ratio
+      const scale = Math.max(scaleX, scaleY);
+
+      // Calculate new font size based on scale
+      const newFontSize = Math.max(10, textNode.fontSize() * scale);
+
+      // Apply new font size
+      textNode.fontSize(newFontSize);
+
+      // Reset scale to 1 to prevent cumulative scaling
+      textNode.scaleX(1);
+      textNode.scaleY(1);
+
+      // Let Konva auto-calculate the text box dimensions
+      // DO NOT manually set width/height - this causes the huge box
+
+      // Redraw the layer
+      this.mainLayer.batchDraw();
+
+      // Update backend
+      this.sendShapeToBackend(textNode);
+    });
+
+    // -----------------------------
+    // SELECTION
+    // -----------------------------
+    // =====================
+    // TEXT SELECTION LOGIC
+    // =====================
+    textNode.on("click", () => {
+
+      // Attach selection
+      this.transformer.nodes([textNode]);
+
+      // Apply mode behavior
+      switch (this.activeTool) {
+
+        case "select":
+          textNode.draggable(false);
+          this.transformer.enabledAnchors([]);
+          this.transformer.rotateEnabled(false);
+          break;
+
+        case "move":
+          textNode.draggable(true);
+          this.transformer.enabledAnchors([]);
+          this.transformer.rotateEnabled(false);
+          break;
+
+        case "resize":
+          textNode.draggable(false);
+          this.transformer.enabledAnchors([
+            "top-left", "top-center", "top-right",
+            "middle-left", "middle-right",
+            "bottom-left", "bottom-center", "bottom-right"
+          ]);
+          this.transformer.rotateEnabled(false);
+          break;
+
+        case "rotate":
+          textNode.draggable(false);
+          this.transformer.enabledAnchors([]);
+          this.transformer.rotateEnabled(true);
+          break;
+      }
+
+      // Update property panel
+      this.canvasService.selectShape({
+        id: textNode.id(),
+        type: "text",
+        fill: textNode.fill(),
+        width: textNode.width(),
+        height: textNode.height(),
+        x: textNode.x(),
+        y: textNode.y(),
+        angle: textNode.rotation()
+      });
+
+      this.mainLayer.batchDraw();
+    });
+
+
+    // -----------------------------
+    // EDITING (DOUBLE CLICK)
+    // -----------------------------
+    textNode.on("dblclick", () => {
+      this.startEditingText(textNode);
+    });
+
+    // -----------------------------
+    // DRAG END → backend
+    // -----------------------------
+    textNode.on("dragend", () => {
+      this.updateShapePositionInBackend(textNode);
+    });
+
+    // -----------------------------
+    // TRANSFORM END → backend
+    // -----------------------------
+    this.transformer.on("transformend", () => {
+      if (this.transformer.nodes().includes(textNode)) {
+        this.updateShapePositionInBackend(textNode);
+      }
+
+
+
+      // Make text selectable the same way as shapes
+      textNode.on("click tap", () => {
+        if (['select', 'move', 'resize', 'rotate'].includes(this.activeTool)) {
+          this.transformer.nodes([textNode]);
+          this.canvasService.selectShape({
+            id: textNode.id(),
+            type: "text",
+            fill: textNode.attrs.fill,
+            stroke: "#000000",
+            strokeWidth: 0,
+            width: textNode.width(),
+            height: textNode.height(),
+            x: textNode.x(),
+            y: textNode.y()
+          });
+        }
+      }
+
+
+      );
+
+
+
+      if (this.activeTool === 'move') {
+        textNode.draggable(true);
+      } else {
+        textNode.draggable(false);
+      }
+
+
+
+
+
+
+    });
+
+    textNode.on("dblclick dbltap", () => {
+      this.startEditingText(textNode);
+    });
+
+    this.mainLayer.add(textNode);
+    this.mainLayer.draw();
+
+    return textNode;
+
+
+
+
+
+  }
+
+
   // ✨ NEW: Method to receive tool change from toolbar (استقبال تغيير الأداة من الـ toolbar)
   // âœ… FIXED: Method to receive tool change from toolbar
   onToolChange(tool: string): void {
+    if (!this.transformer) {
+      console.error('❌ Transformer not initialized');
+      return;
+    }
     this.activeTool = tool;
 
     // Reset all mode flags
@@ -744,8 +1144,9 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     this.canResize = false;
     this.canRotate = false;
 
+
     // Set transformer properties based on mode
-    switch(tool) {
+    switch (tool) {
       case 'select':
         this.canSelect = true;
         this.transformer.enabledAnchors([]);
@@ -808,6 +1209,16 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
           }
         });
         break;
+
+
+      case 'pencil':
+        this.canSelect = false;
+        this.canMove = false;
+        this.canResize = false;
+        this.canRotate = false;
+        this.transformer.nodes([]); // remove selection
+        break;
+
 
       default:
         // For drawing tools, clear selection and disable transformer
@@ -917,6 +1328,9 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     // Use stage pointer position directly (already in stage coordinate system)
     this.setZoomKonvaInstant(newZoom, pointer.x, pointer.y);
   }
+
+
+
 
   // Instant zoom without animation for wheel
   setZoomKonvaInstant(newZoom: number, pointerX: number, pointerY: number) {
@@ -1234,14 +1648,11 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
   // Backend Logic
   // -------------------------
   private setupSubscriptions(): void {
-    this.subscriptions.add(
-      this.canvasService.action$.subscribe(action => this.handleAction(action))
-    );
     // this.subscriptions.add(
     //   this.canvasService.color$.subscribe(color => this.changeColor(color))
     // );
     this.subscriptions.add(
-      this.canvasService.save$.subscribe(data => this.exportFile(data.type, data.fileName))
+      this.canvasService.save$.subscribe(data => this.exportFile(data.type, data.fileName, data.path))
     );
     this.subscriptions.add(
       this.canvasService.load$.subscribe(file => this.uploadFile(file))
@@ -1326,7 +1737,7 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-// Helper to update shape size
+  // Helper to update shape size
   private updateShapeSize(shape: Konva.Shape, width: number, height: number): void {
     if (shape instanceof Konva.Rect) {
       shape.width(width);
@@ -1343,6 +1754,49 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
     this.updateShapePositionInBackend(shape);
   }
 
+  private createPencil(x: number, y: number): Konva.Line {
+    const pencil = new Konva.Line({
+      points: [x, y, x, y],         // start stroke at mouse position
+      stroke: this.canvasService.getDefaultStrokeColor(),
+      strokeWidth: 2,
+      lineCap: 'round',
+      lineJoin: 'round',
+      draggable: false,
+      listening: true,
+      tension: 0,
+      shapeType: 'pencil'
+    });
+
+    // When done drawing → send to backend
+    pencil.on("mouseup touchend", () => {
+      this.updatePencilInBackend(pencil);
+    });
+
+    this.mainLayer.add(pencil);
+    this.mainLayer.batchDraw();
+    return pencil;
+  }
+
+  private updatePencilInBackend(pencil: Konva.Line): void {
+    const points = pencil.points();
+    const strokeColor = pencil.stroke() || '#000000';
+    const strokeWidth = pencil.strokeWidth() || 2;
+
+    const updateData = {
+      id: pencil.id(),
+      type: 'pencil',
+      points: points,
+      strokeColor: strokeColor,
+      strokeWidth: strokeWidth
+    };
+
+    this.http.put(`${this.BACKEND_URL}/updateShape`, updateData).subscribe({
+      next: (r) => console.log("✅ Pencil updated:", r),
+      error: (e) => console.error("❌ Cannot update pencil:", e)
+    });
+  }
+
+
   private handleAction(action: string): void {
     if (!this.stage) return;
     const selectedNodes = this.transformer.nodes();
@@ -1353,16 +1807,19 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
         if (activeObject && this.isShapeForFormat(activeObject)) {
           // استخدم الصيغة الجديدة لبيانات الشكل
           const shapeData = this.formatShapeData(activeObject);
+          const shid = activeObject.attrs.id;
           if (shapeData) {
-            this.http.post(`${this.BACKEND_URL}/copy`, shapeData).subscribe({
+            this.http.post(`${this.BACKEND_URL}/copy/${shid}`, shapeData).subscribe({
               next: (copiedShapeData: any) => {
-                // استخدم Konva.Shape.create بدلاً من Konva.Node.create
-                const newShape = Konva.Shape.create(copiedShapeData);
-                this.mainLayer.add(newShape);
-                this.transformer.nodes([newShape]);
-                // احفظ ID الجديد إذا كان موجوداً في الرد
-                if (copiedShapeData.id) {
-                  newShape.setAttr('id', copiedShapeData.id);
+                // Create new shape using the recreateShape method
+                const newShape = this.recreateShape(copiedShapeData);
+                if (newShape) {
+                  this.mainLayer.add(newShape);
+                  this.transformer.nodes([newShape]);
+                  this.mainLayer.batchDraw();
+                  console.log(`✅ Copied shape with ID: ${copiedShapeData.id}`);
+                } else {
+                  console.error('Failed to create copied shape');
                 }
               },
               error: (err) => console.error('Copy failed', err)
@@ -1370,19 +1827,14 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
           }
         }
         break;
-
       case 'delete':
         if (activeObject) {
-          activeObject.destroy();
-          this.transformer.nodes([]);
+
           this.saveStateToBackend('delete');
         }
         break;
 
       case 'clear':
-        this.mainLayer.destroyChildren();
-        this.mainLayer.add(this.transformer);
-        this.transformer.nodes([]);
         this.saveStateToBackend('clear');
         break;
 
@@ -1399,30 +1851,362 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
 
   private saveStateToBackend(actionType: string): void {
     if (!this.stage) return;
-    const stageJSON = this.stage.toJSON();
-    this.http.post(`${this.BACKEND_URL}/action`, {
-      action: actionType,
-      state: stageJSON
-    }).subscribe({
-      next: () => console.log(`State saved: ${actionType}`),
-      error: (err) => console.error('Error saving state', err)
-    });
+
+    const selectedNodes = this.transformer.nodes();
+    const activeObject = selectedNodes.length > 0 ? selectedNodes[0] : null;
+    const cur = activeObject?.attrs.id;
+
+    if (actionType === 'delete') {
+      if (activeObject && cur) {
+        activeObject.destroy();
+        this.transformer.nodes([]);
+
+        // ✨ FIX: Use proper HttpClient.delete() syntax
+        this.http.delete(`${this.BACKEND_URL}/${actionType}/${cur}`).subscribe({
+          next: () => console.log(`Shape deleted from backend: ${cur}`),
+          error: (err) => console.error('Error deleting shape', err)
+        });
+      }
+    }
+    else if (actionType === 'clear') {
+      this.mainLayer.destroyChildren();
+      this.mainLayer.add(this.transformer);
+      this.transformer.nodes([]);
+
+      // ✨ FIX: Use proper HttpClient.delete() syntax
+      this.http.delete(`${this.BACKEND_URL}/delete`).subscribe({
+        next: () => console.log(`Shape deleted from backend`),
+        error: (err) => console.error('Error deleting shape', err)
+      });
+    }
+  }
+private performUndo(): void {
+  this.http.post(`${this.BACKEND_URL}/undo`, {}).subscribe({
+    next: (response: any) => {
+      // Check if response contains an error
+      if (response.error) {
+        alert(response.error); // Show alert with the error message
+        return;
+      }
+      
+      if (response) {
+        this.handleUndoRedoResponse(response);
+      }
+    },
+    error: (err) => {
+      console.error('Undo failed', err);
+      // Handle HTTP errors (500, 404, etc.)
+      if (err.error?.error) {
+        alert(err.error.error);
+      } else {
+        alert('Failed to perform undo operation');
+      }
+    }
+  });
+}
+
+private performRedo(): void {
+  this.http.post(`${this.BACKEND_URL}/redo`, {}).subscribe({
+    next: (response: any) => {
+      // Check if response contains an error
+      if (response.error) {
+        alert(response.error); // Show alert with the error message
+        return;
+      }
+      
+      if (response) {
+        this.handleUndoRedoResponse(response);
+      }
+    },
+    error: (err) => {
+      console.error('Redo failed', err);
+      // Handle HTTP errors (500, 404, etc.)
+      if (err.error?.error) {
+        alert(err.error.error);
+      } else {
+        alert('Failed to perform redo operation');
+      }
+    }
+  });
+}
+
+  private handleUndoRedoResponse(shapeData: any): void {
+    const action = shapeData.action; // Get action from response
+    const shapeId = shapeData.id;
+    console.log('Processing shape:', shapeId, 'with action:', action);
+
+    if (action === 'remove') {
+      // Remove shape from canvas
+      const existingShape = this.mainLayer.findOne((node: Konva.Node) => node.id() === shapeId);
+
+      console.log('Found shape to remove:', existingShape);
+
+      if (existingShape) {
+        existingShape.destroy();
+        console.log(`🗑️ Deleted shape with ID: ${shapeId}`);
+      } else {
+        console.log(`❌ Shape not found with ID: ${shapeId}`);
+        // Debug: print all shapes in layer
+        console.log('All shapes in layer:', this.mainLayer.children?.map((c: Konva.Node) => c.id()));
+      }
+    }
+    else if (action === 'add') {
+      // Check if shape already exists
+      const existingShape = this.mainLayer.findOne((node: Konva.Node) => node.id() === shapeId);
+
+      if (existingShape) {
+        // Update existing shape
+        this.updateExistingShape(existingShape as Konva.Shape, shapeData);
+        console.log(`🔄 Updated existing shape with ID: ${shapeId}`);
+      } else {
+        // Create new shape
+        const newShape = this.recreateShape(shapeData);
+        if (newShape) {
+          this.mainLayer.add(newShape);
+          console.log(`✅ Loaded new shape with ID: ${shapeId}`);
+        }
+      }
+    }
+    else if (action === 'update') {
+      // Update existing shape with new properties
+      const existingShape = this.mainLayer.findOne((node: Konva.Node) => node.id() === shapeId);
+
+      if (existingShape) {
+        this.updateExistingShape(existingShape as Konva.Shape, shapeData);
+        console.log(`🔄 Updated shape properties with ID: ${shapeId}`);
+      } else {
+        console.log(`❌ Shape not found for update with ID: ${shapeId}`);
+        console.log('All shapes in layer:', this.mainLayer.children?.map((c: Konva.Node) => c.id()));
+      }
+    }
+
+    // Clear selection and redraw
+    this.transformer.nodes([]);
+    this.mainLayer.batchDraw();
   }
 
-  private performUndo(): void {
-    this.http.post(`${this.BACKEND_URL}/undo`, {}).subscribe({
-      next: (state: any) => { if (state) this.loadCanvasState(state); },
-      error: (err) => console.error('Undo failed', err)
-    });
+  private updateExistingShape(shape: Konva.Shape, data: any): void {
+    // Update common properties
+    shape.fill(data.fillColor);
+    shape.stroke(data.outlineColor);
+    shape.strokeWidth(data.strokeWidth);
+    shape.rotation(data.angle || 0);
+
+    // Handle TEXT
+    if (data.type === 'text' && shape instanceof Konva.Text) {
+      shape.text(data.properties?.content || "Text");
+      shape.fontSize(data.properties?.fontSize || 28);
+      shape.fontFamily(data.properties?.fontFamily || 'Arial');
+      shape.fontStyle(data.properties?.fontStyle || 'normal');
+      shape.x(data.x);
+      shape.y(data.y);
+      return; // Exit here
+    }
+
+    // Handle PENCIL
+    if (data.type === 'pencil' && shape instanceof Konva.Line) {
+      shape.points(data.points);
+      shape.stroke(data.strokeColor);
+      shape.strokeWidth(data.strokeWidth);
+      return;
+    }
+
+    // Handle RECTANGLE/SQUARE
+    if (shape instanceof Konva.Rect) {
+      shape.x(data.x);
+      shape.y(data.y);
+      if (data.type === 'square') {
+        shape.width(data.properties.sideLength);
+        shape.height(data.properties.sideLength);
+      } else {
+        shape.width(data.properties.width);
+        shape.height(data.properties.length);
+      }
+    }
+
+    // Handle CIRCLE
+    else if (shape instanceof Konva.Circle) {
+      shape.radius(data.properties.radius);
+      shape.x(data.centerX);
+      shape.y(data.centerY);
+    }
+
+    // Handle ELLIPSE
+    else if (shape instanceof Konva.Ellipse) {
+      shape.radiusX(data.properties.radiusX);
+      shape.radiusY(data.properties.radiusY);
+      shape.x(data.centerX);
+      shape.y(data.centerY);
+    }
+
+    // Handle TRIANGLE
+    else if (shape instanceof Konva.RegularPolygon) {
+      shape.radius(data.properties.height || data.properties.base);
+      shape.x(data.centerX);
+      shape.y(data.centerY);
+    }
+
+    // Handle LINE
+    else if (shape instanceof Konva.Line) {
+      const pts = [
+        data.x,
+        data.y,
+        data.properties.xEnd,
+        data.properties.yEnd
+      ];
+      shape.points(pts);
+    }
   }
 
-  private performRedo(): void {
-    this.http.post(`${this.BACKEND_URL}/redo`, {}).subscribe({
-      next: (state: any) => { if (state) this.loadCanvasState(state); },
-      error: (err) => console.error('Redo failed', err)
-    });
+
+  private recreateShape(s: any): Konva.Shape | null {
+
+    if (!s || !s.type) return null;
+
+    let shape: Konva.Shape | null = null;
+
+    //
+    // 1️⃣ TEXT (special case)
+    //
+    if (s.type === 'text') {
+      shape = new Konva.Text({
+        x: s.x || 0,
+        y: s.y || 0,
+        text: s.properties?.content || "Text",
+        fontSize: s.properties?.fontSize || 28,
+        fontFamily: s.properties?.fontFamily || 'Arial',
+        fontStyle: s.properties?.fontStyle || 'normal',
+        fill: s.fillColor || '#ffffff',
+        stroke: s.outlineColor || '#090101',
+        strokeWidth: s.strokeWidth || 2,
+        rotation: s.angle || 0,
+        draggable: true,
+        padding: 4
+      });
+
+      shape.id(s.id);
+
+      // Re-attach event listeners
+      shape.on("dragend", () => {
+        this.updateShapePositionInBackend(shape as Konva.Text);
+      });
+
+      shape.on("transformend", () => {
+        this.updateShapePositionInBackend(shape as Konva.Text);
+      });
+
+      shape.on("dblclick dbltap", () => {
+        this.startEditingText(shape as Konva.Text);
+      });
+
+      return shape;
+    }
+
+    //
+    // 2️⃣ PENCIL
+    //
+    if (s.type === 'pencil') {
+      // create starting point
+      shape = this.createPencil(s.points[0], s.points[1]);
+
+      // replace ALL points from backend
+      (shape as Konva.Line).points(s.points);
+
+      shape.stroke(s.strokeColor);
+      shape.strokeWidth(s.strokeWidth);
+      shape.id(s.id);
+      return shape;
+    }
+
+    //
+    // 3️⃣ NORMAL SHAPES (rect, square, circle, ellipse, triangle, line)
+    //
+    // For shapes with centerX/centerY, use those coordinates
+    const useCenter = s.type === 'circle' || s.type === 'ellipse' || s.type === 'triangle';
+    const shapeX = useCenter ? (s.centerX ?? s.x ?? 0) : (s.x ?? 0);
+    const shapeY = useCenter ? (s.centerY ?? s.y ?? 0) : (s.y ?? 0);
+
+    shape = this.createShape(s.type === "rectangle" ? "rect" : s.type, shapeX, shapeY);
+    if (!shape) return null;
+
+    shape.id(s.id);
+    shape.fill(s.fillColor || '#000000');
+    shape.stroke(s.outlineColor || '#000000');
+    shape.strokeWidth(s.strokeWidth || 1);
+    shape.rotation(s.angle || 0);
+
+    // Apply sizes
+    if (shape instanceof Konva.Rect) {
+      if (s.type === "square") {
+        const sideLength = s.properties?.sideLength ?? 50;
+        shape.width(sideLength);
+        shape.height(sideLength);
+        shape.setAttr("shapeType", "square");
+      } else {
+        const width = s.properties?.width ?? 100;
+        const height = s.properties?.length ?? s.properties?.height ?? 50;
+        shape.width(width);
+        shape.height(height);
+        shape.setAttr("shapeType", "rectangle");
+      }
+    }
+
+    else if (shape instanceof Konva.Circle) {
+      const radius = s.properties?.radius ?? 50;
+      shape.radius(radius);
+    }
+
+    else if (shape instanceof Konva.Ellipse) {
+      const rx = s.properties?.radiusX ?? (s.properties?.width ? s.properties.width / 2 : 50);
+      const ry = s.properties?.radiusY ?? (s.properties?.height ? s.properties.height / 2 : 30);
+      shape.radiusX(rx);
+      shape.radiusY(ry);
+    }
+
+    else if (shape instanceof Konva.RegularPolygon) {
+      const radius = s.properties?.height ? s.properties.height / 1.5 : s.properties?.radius ?? 50;
+      shape.radius(radius);
+    }
+
+    else if (shape instanceof Konva.Line) {
+      const pts = [
+        s.x ?? 0,
+        s.y ?? 0,
+        s.properties?.xEnd ?? (s.x ?? 0) + 100,
+        s.properties?.yEnd ?? (s.y ?? 0) + 100
+      ];
+      shape.points(pts);
+    }
+
+    return shape;
   }
 
+
+
+
+
+
+
+
+  private loadShapesListState(state: any[]): void {
+    // 1. Clear layer
+    this.mainLayer.destroyChildren();
+    this.mainLayer.add(this.transformer);
+
+    // 2. Create each shape again
+    for (const s of state) {
+      const shape = this.recreateShape(s);
+      if (shape) this.mainLayer.add(shape);
+    }
+
+    // 3. Redraw
+    this.mainLayer.draw();
+    this.transformer.nodes([]);
+  }
+
+
+
+  
   private loadCanvasState(jsonState: any): void {
     const container = this.getContainer();
     if (!container) return;
@@ -1447,27 +2231,149 @@ export class BoardComponent implements AfterViewInit, OnDestroy {
       this.gridLayer.moveToBottom();
     }
 
+    // ✨ IMPORTANT: Recreate transformer (not just reference it)
     this.transformer = new Konva.Transformer();
     this.mainLayer.add(this.transformer);
 
     this.initKonvaEvents();
     this.drawGrid();
+
+    console.log('✅ Canvas state loaded successfully');
+  }
+  // ✨ NEW: Load shapes from JSON file (array of shape objects)
+  private loadShapesFromFile(shapesData: any[]): void {
+    if (!Array.isArray(shapesData)) {
+      console.error('Invalid JSON format. Expected an array of shapes.');
+      return;
+    }
+
+    if (!this.transformer) {
+      console.warn('⚠️ Transformer not found, recreating...');
+      this.transformer = new Konva.Transformer();
+    }
+
+    // Clear existing shapes (keep transformer and background)
+    this.mainLayer.destroyChildren();
+    this.mainLayer.add(this.transformer);
+
+    // Load each shape
+    shapesData.forEach(shapeData => {
+      const shape = this.recreateShape(shapeData);
+      if (shape) {
+        this.mainLayer.add(shape);
+        console.log(`✅ Loaded shape ID: ${shapeData.id}`);
+      }
+    });
+
+    // Redraw and clear selection
+    this.transformer.nodes([]);
+    this.mainLayer.batchDraw();
+    console.log(`✅ Loaded ${shapesData.length} shapes from file`);
   }
 
-  private exportFile(type: string, fileName: string): void {
+  private exportFile(type: string, fileName: string, path?: string): void {
     if (!this.stage) return;
-    const canvasData = this.stage.toJSON();
-    this.http.post(`${this.BACKEND_URL}/export`, { name: fileName, type, data: canvasData })
-      .subscribe(res => console.log('File exported', res));
+
+    // Get all shapes from the main layer
+    const shapes = this.mainLayer.children.filter(child =>
+      this.isShape(child) && child.id() !== 'board-background'
+    );
+
+    // Format each shape's data
+    const shapesData = shapes.map(shape => {
+      const shapeData = this.formatShapeData(shape);
+      return {
+        ...shapeData,
+        id: shape.id() || shape._id.toString()
+      };
+    });
+
+    // Create the payload
+    const payload = {
+      fileName: fileName,
+      filePath: path || ''
+
+    };
+
+    // Determine the endpoint based on type
+    const endpoint = type === 'json'
+      ? `${this.BACKEND_URL}/save/json`
+      : `${this.BACKEND_URL}/save/xml`;
+
+    console.log(`💾 Saving as ${type.toUpperCase()}:`, payload);
+
+    this.http.post(endpoint, payload).subscribe({
+      next: (response) => {
+        console.log('✅ File saved successfully:', response);
+        alert(`File saved successfully as ${type.toUpperCase()}!`);
+      },
+      error: (err) => {
+        console.error('❌ Error saving file:', err);
+        alert(`Failed to save file: ${err.message || 'Unknown error'}`);
+      }
+    });
   }
 
   private uploadFile(file: File): void {
     const reader = new FileReader();
+
     reader.onload = (e) => {
-      const content = e.target?.result as string;
-      this.loadCanvasState(content);
-      this.saveStateToBackend('file_loaded');
+      try {
+        const content = e.target?.result as string;
+
+        // Try to parse as JSON
+        const parsedData = JSON.parse(content);
+
+        // Check if it's an array of shapes (from your JSON file format)
+        if (Array.isArray(parsedData)) {
+          console.log('📂 Detected shape array format');
+          this.loadShapesFromFile(parsedData);
+        }
+        // Otherwise, treat as Konva stage JSON
+        else if (parsedData && typeof parsedData === 'object') {
+          console.log('📂 Detected Konva stage format');
+          this.loadCanvasState(content);
+          // ✨ IMPORTANT: Reinitialize events after loading canvas state
+          this.initKonvaEvents();
+        }
+        else {
+          throw new Error('Invalid JSON format');
+        }
+
+        // ✨ NEW: Ensure transformer is ready
+        if (!this.transformer) {
+          this.transformer = new Konva.Transformer();
+          this.mainLayer.add(this.transformer);
+        }
+
+        // Notify backend
+        // this.saveStateToBackend('file_loaded');  // Optional: comment out if causing issues
+
+      } catch (error) {
+        console.error('❌ Failed to load file:', error);
+        alert('Failed to load file. Please check the format.');
+      }
     };
+    reader.onerror = () => {
+      console.error('❌ Error reading file');
+      alert('Error reading file');
+    };
+
     reader.readAsText(file);
   }
+
+  private updateUndoRedoLock(): void {
+    this.http.get(`${this.BACKEND_URL}/historyStatus`).subscribe({
+      next: (st: any) => {
+        this.undoAvailable = st.undo;
+        this.redoAvailable = st.redo;
+      },
+      error: () => {
+        this.undoAvailable = false;
+        this.redoAvailable = false;
+      }
+    });
+  }
+
+
 }

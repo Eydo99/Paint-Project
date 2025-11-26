@@ -1,17 +1,22 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CanvasService } from '../../service/canvas.service';
-
+import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css']
 })
 export class NavbarComponent {
 
   openMenu: string | null = null;
+
+  showSaveDialog: boolean = false;
+  saveFormat: 'json' | 'xml' = 'json';
+  saveFileName: string = 'my-paint-project';
+  savePath: string = '';
 
   // ✨ NEW: Track current default colors
   currentFillColor: string = '#ffffff';
@@ -40,7 +45,7 @@ export class NavbarComponent {
     '#00FFFF', '#20B2AA', '#008B8B', '#008080'
   ];
 
-  constructor(private canvasService: CanvasService) {}
+  constructor(private canvasService: CanvasService) { }
 
   toggleMenu(menuName: string) {
     this.openMenu = this.openMenu === menuName ? null : menuName;
@@ -69,11 +74,34 @@ export class NavbarComponent {
     this.openMenu = null;
   }
 
-  saveFile(format: 'json' | 'xml') {
-    this.canvasService.saveFile(format, 'my-paint-project');
+  // ✨ UPDATED: Open save dialog instead of direct save
+  openSaveDialog(format: 'json' | 'xml') {
+    this.saveFormat = format;
+    this.showSaveDialog = true;
     this.openMenu = null;
   }
 
+  // ✨ NEW: Close save dialog
+  closeSaveDialog() {
+    this.showSaveDialog = false;
+    this.saveFileName = 'my-paint-project';
+    this.savePath = '';
+  }
+
+  // ✨ NEW: Confirm save with path and filename
+  confirmSave() {
+    if (!this.saveFileName.trim()) {
+      alert('Please enter a file name');
+      return;
+    }
+
+    this.canvasService.saveFile(
+      this.saveFormat,
+      this.saveFileName.trim(),
+      this.savePath.trim()
+    );
+    this.closeSaveDialog();
+  }
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {

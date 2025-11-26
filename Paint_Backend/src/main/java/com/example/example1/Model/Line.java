@@ -56,6 +56,8 @@ public class Line extends shape {
         Line clone=(Line)super.clone();
         clone.xEnd=this.xEnd;
         clone.yEnd=this.yEnd;
+        clone.x=this.x+10;
+        clone.y=this.y+10;
         return clone;
     }
 

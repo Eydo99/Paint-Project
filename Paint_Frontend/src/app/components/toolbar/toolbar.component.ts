@@ -28,10 +28,7 @@ export class ToolbarComponent {
     Triangle,
     Minus,
     Type,
-    Brush,
     Pencil,
-    Signature,
-    Eraser,  // الاسم الصحيح
     PaintBucket,
     Pipette,
     Copy,
